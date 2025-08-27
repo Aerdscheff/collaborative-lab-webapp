@@ -25,14 +25,13 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-
 async def send_email(template_key: str, params: Dict[str, Any]) -> None:
     """Send an email via EmailJS.
 
     Looks up the service ID, user ID and template ID from environment
     variables. The template key should correspond to the suffix of
     ``EMAILJS_TEMPLATE_<key>`` in the environment. For example,
-    passing ``"NEW_FICHE"`` will look up ``EMAILJS_TEMPLATE_NEW_FICHE``.
+    passing "NEW_FICHE" will look up ``EMAILJS_TEMPLATE_NEW_FICHE``.
 
     Args:
         template_key: The suffix identifying which template ID to use.
@@ -73,7 +72,6 @@ async def send_email(template_key: str, params: Dict[str, Any]) -> None:
     except Exception as exc:
         logger.exception("Failed to send email via EmailJS: %s", exc)
 
-
 async def send_welcome_email(to_email: str, to_name: Optional[str] = None) -> None:
     """Send a welcome email to a new user.
 
@@ -87,7 +85,6 @@ async def send_welcome_email(to_email: str, to_name: Optional[str] = None) -> No
     }
     await send_email("WELCOME", params)
 
-
 async def send_profile_reminder_email(to_email: str, to_name: Optional[str] = None) -> None:
     """Send a reminder email prompting the user to complete their profile.
 
@@ -100,7 +97,6 @@ async def send_profile_reminder_email(to_email: str, to_name: Optional[str] = No
         "to_name": to_name or to_email,
     }
     await send_email("REMINDER", params)
-
 
 async def send_new_fiche_notification(
     fiche: Dict[str, Any], admin_emails: List[str]
