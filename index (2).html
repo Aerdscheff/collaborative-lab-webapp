@@ -1,0 +1,3275 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <!-- Politique de sécurité du contenu pour limiter les sources et protéger contre les injections -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 connect-src 'self' https://api.openai.com https://api.emailjs.com;
+                 img-src 'self' data:;
+                 style-src 'self' 'unsafe-inline';
+                 script-src 'self' 'unsafe-inline';
+                 frame-ancestors 'none';">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Äerdschëff SES – Web App Locale</title>
+  <!--
+    Cette application web est un prototype « monobloc » qui tourne entièrement dans le navigateur : aucune
+    dépendance serveur (hormis l’API OpenAI si l’utilisateur la configure dans les paramètres).  Elle permet
+    de créer des fiches pédagogiques, calculer des compatibilités entre fiches, générer des scénarios
+    transdisciplinaires avec ChatGPT‑5 et capitaliser les ressources générées.  Le design s’inspire de la
+    charte visuelle d’Äerdschëff : palette rosée, bandeau « sol » et logo officiel.
+  -->
+  <style>
+    :root {
+      /* Palette inspirée du site aerdscheff.lu */
+      /* Couleurs principales : fond rosé très clair, accents corail et terre cuite,
+         teintes sombres pour le texte et couleurs sable pour les bordures. */
+      --bg: #fdf0ec;
+      --accent: #c44a3d;
+      --accent-light: #f3b6ad;
+      --dark: #4a3631;
+      --sand: #d9a18c;
+      --paper: #fff7f3;
+      --border-radius: 0.5rem;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background-color: var(--bg);
+      color: var(--dark);
+    }
+    header {
+      position: relative;
+      background-color: var(--paper);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      border-bottom: 8px solid var(--sand);
+      /* Permet au contenu de s'enrouler sur plusieurs lignes :
+         la barre utilisateur occupe toute la largeur en première ligne
+         puis le logo, le titre et la navigation s'affichent en dessous */
+      flex-wrap: wrap;
+    }
+    header img.logo {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+    header h1 {
+      font-size: 1.5rem;
+      margin: 0;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    nav {
+      display: flex;
+      gap: 1rem;
+      margin-left: auto;
+    }
+    nav button {
+      background: none;
+      border: none;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: var(--border-radius);
+      transition: background-color 0.2s ease;
+      color: var(--dark);
+    }
+    nav button.active,
+    nav button:hover {
+      background-color: var(--accent-light);
+    }
+    main {
+      padding: 1rem 2rem 4rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    section {
+      display: none;
+    }
+    section.active {
+      display: block;
+    }
+    .card {
+      background: var(--paper);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .form-group {
+      margin-bottom: 0.75rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .form-group label {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      padding: 0.5rem;
+      border: 1px solid var(--sand);
+      border-radius: var(--border-radius);
+      background: #fff;
+      font-size: 0.9rem;
+    }
+    .btn {
+      display: inline-block;
+      padding: 0.6rem 1rem;
+      border: none;
+      border-radius: var(--border-radius);
+      background-color: var(--accent);
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    /* Focus visible pour l’accessibilité */
+    .btn:focus {
+      outline: 3px solid #000;
+      outline-offset: 2px;
+    }
+    /* Survol : couleur claire et texte sombre pour respecter les contrastes */
+    .btn:hover {
+      background-color: var(--accent-light);
+      color: var(--dark);
+    }
+    .projects-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .project-card {
+      width: calc(50% - 0.5rem);
+      background: var(--paper);
+      border-radius: var(--border-radius);
+      padding: 0.75rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      position: relative;
+    }
+    .project-card h3 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      font-size: 1.3rem;
+    }
+    .project-card small {
+      font-size: 0.75rem;
+      color: #666;
+    }
+    .match-controls {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .results {
+      margin-top: 1rem;
+      background: var(--paper);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 1rem;
+      background: var(--sand);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+    }
+    .progress-bar div {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+    }
+
+    /* Barre utilisateur et badge */
+    .user-bar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding: 0.25rem 2rem;
+      background: var(--paper);
+      border-bottom: 1px solid var(--sand);
+      /* La barre utilisateur occupe toute la largeur de la ligne et aligne son contenu à droite */
+      width: 100%;
+    }
+    .user-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      background: var(--accent);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      cursor: default;
+    }
+    .user-bar button {
+      background: none;
+      border: none;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      color: var(--dark);
+      border-radius: var(--border-radius);
+      transition: background-color 0.2s ease;
+    }
+    .user-bar button:hover {
+      background: var(--accent-light);
+    }
+    .user-bar .badge {
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      padding: 0 6px;
+      margin-left: 4px;
+      font-size: 0.7rem;
+    }
+    /* Decorative soil band at bottom of page */
+    .soil-band {
+      width: 100%;
+      height: 70px;
+      /* utilise la version locale de la bande de terre téléchargée depuis le site */
+      background-image: url('home-top-bottom.png');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      margin-top: 4rem;
+    }
+
+    /* Footer de contact en bas de page */
+    .contact-info {
+      background: var(--paper);
+      border-top: 1px solid var(--sand);
+      text-align: center;
+      font-size: 0.85rem;
+      padding: 1rem 0;
+    }
+    .contact-info a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .contact-info a:hover {
+      text-decoration: underline;
+    }
+
+    /* Bandeau héro qui reprend les codes du site : collage, typographie serif et
+       éléments organiques (cactus et cochon) positionnés en absolu. */
+    .hero-banner {
+      position: relative;
+      background-color: var(--paper);
+      padding: 2rem 2rem 5rem;
+      text-align: center;
+      overflow: hidden;
+    }
+    .hero-banner h2 {
+      font-family: Georgia, ui-serif, serif;
+      font-size: 2rem;
+      margin: 0.25rem 0;
+      font-weight: 400;
+      color: var(--accent);
+      line-height: 1.2;
+    }
+    .hero-banner .tagline {
+      /* utilisation du flux normal pour empiler les slogans ; pas de inline-block */
+      display: block;
+    }
+    .hero-banner img.decor {
+      position: absolute;
+      bottom: -10px;
+      width: 140px;
+      height: auto;
+      pointer-events: none;
+      /* S'assure que les éléments décoratifs passent au-dessus de l'image de fond */
+      z-index: 2;
+    }
+    .hero-banner img.decor.cactus {
+      right: 15%;
+    }
+    .hero-banner img.decor.pig {
+      right: 0;
+      width: 180px;
+    }
+
+    /* Badge de notification pour les messages non lus */
+    .badge {
+      background: var(--accent);
+      color: #fff;
+      border-radius: 1rem;
+      padding: 0 0.4rem;
+      font-size: 0.7rem;
+      margin-left: 0.25rem;
+    }
+
+    /* Modal d’authentification pour l’inscription et la connexion des enseignants */
+    #authModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+    #authModal .auth-content {
+      background: var(--paper);
+      padding: 2rem;
+      border-radius: var(--border-radius);
+      width: 320px;
+      max-width: 90%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    #authModal h3 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    #authModal .form-group {
+      margin-bottom: 0.75rem;
+    }
+    #authModal input[type="text"], #authModal input[type="email"], #authModal input[type="password"] {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid var(--sand);
+      border-radius: var(--border-radius);
+    }
+    #authModal button {
+      width: 100%;
+      padding: 0.6rem;
+      border: none;
+      border-radius: var(--border-radius);
+      background: var(--accent);
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 0.75rem;
+    }
+    #authModal .toggle {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <!-- Barre utilisateur : affiche l’identifiant et les liens de profil, messages et déconnexion -->
+    <div class="user-bar" id="userBar" style="display:none;">
+      <div id="userBadge" class="user-badge">?</div>
+      <button id="navProfile" style="display:none;" role="button">Profil</button>
+      <button id="navMessages" style="display:none;" role="button">Messages<span class="badge" id="messageBadge" style="display:none;">0</span></button>
+      <button id="logoutBtn" style="display:none;" role="button">Déconnexion</button>
+    </div>
+    <!-- Logo officiel : on utilise désormais un fichier local sans espace pour garantir le chargement -->
+    <img class="logo" alt="Äerdschëff logo" src="logo-official.png" />
+    <h1>Collaborativ Lab – <span style="color:var(--accent)">Äerdschëff</span></h1>
+    <nav id="tabs" role="tablist" aria-label="Navigation principale">
+      <button data-tab="create" class="active" onclick="switchTab('create')" role="tab" aria-selected="true">Créer une fiche</button>
+      <button data-tab="search" onclick="switchTab('search')" role="tab" aria-selected="false">Recherche</button>
+      <!-- Le moteur de correspondance est disponible via l’onglet Matching, placé entre Recherche et Ressources -->
+      <button data-tab="meet" onclick="switchTab('meet')" role="tab" aria-selected="false">Matching</button>
+      <button data-tab="resources" onclick="switchTab('resources')" role="tab" aria-selected="false">Ressources</button>
+      <button data-tab="about" onclick="switchTab('about')" role="tab" aria-selected="false">À propos</button>
+      <button data-tab="settings" id="adminTab" style="display:none;" onclick="switchTab('settings')" role="tab" aria-selected="false">Administration</button>
+    </nav>
+  </header>
+
+  <!-- Bannière remaniée avec le nouveau slogan -->
+  <div class="hero-banner">
+    <!--
+      Slogan principal : remplace l’ancien message par « Collaborativ Lab - Äerdschëff »
+      L’utilisation du trait d’union standard permet d’éviter toute ambiguïté sur le caractère
+      souhaité. L’espace autour du trait est insécable pour conserver le rendu homogène.
+    -->
+    <!-- Tagline du bandeau : vide par défaut. Le texte sera appliqué via les paramètres de design -->
+    <!-- Tagline du bandeau masqué pour ne pas afficher de texte sur l’image -->
+    <h2 class="tagline" style="display:none;"></h2>
+    <!-- éléments décoratifs : cactus et cochon provenant du site (lazy‑load, dimensions explicites) -->
+    <img src="cactus-home.png" alt="" class="decor cactus" loading="lazy" width="140" height="140" />
+    <img src="donat-home.png" alt="" class="decor pig" loading="lazy" width="180" height="150" />
+  </div>
+  <!-- Charger EmailJS pour l’envoi des emails (si le service est configuré).  
+       Vous devrez fournir les identifiants dans l’onglet Administration.  -->
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.6.4/dist/email.min.js"></script>
+
+  <!-- Modale d’authentification (inscription/connexion) -->
+  <div id="authModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="auth-content" tabindex="-1">
+      <div id="loginForm">
+        <h3 id="authTitle">Connexion</h3>
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" required />
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Mot de passe</label>
+          <input type="password" id="loginPassword" required />
+        </div>
+        <button id="loginButton">Se connecter</button>
+        <div class="toggle" id="showRegister" onclick="toggleToRegister()">Pas encore de compte ? Créer un profil</div>
+        <!-- Lien pour réinitialiser le mot de passe -->
+        <div class="toggle" id="forgotPasswordLink" onclick="toggleToForgotPassword()">Mot de passe oublié ?</div>
+      </div>
+      <div id="registerForm" style="display:none;">
+        <h3 id="registerTitle">Créer un profil</h3>
+        <div class="form-group">
+          <label for="registerName">Nom</label>
+          <input type="text" id="registerName" required />
+        </div>
+        <div class="form-group">
+          <label for="registerEmail">Email</label>
+          <input type="email" id="registerEmail" required />
+        </div>
+        <div class="form-group">
+          <label for="registerPassword">Mot de passe</label>
+          <input type="password" id="registerPassword" required />
+        </div>
+        <button id="registerButton">S’inscrire</button>
+        <div class="toggle" id="showLogin" onclick="toggleToLogin()">Déjà un compte ? Se connecter</div>
+      </div>
+
+      <!-- Formulaire de demande de réinitialisation de mot de passe -->
+      <div id="forgotPasswordForm" style="display:none;">
+        <h3>Mot de passe oublié</h3>
+        <div class="form-group">
+          <label for="forgotEmail">Email</label>
+          <input type="email" id="forgotEmail" required />
+        </div>
+        <button id="sendResetLinkButton">Envoyer le lien de réinitialisation</button>
+        <div class="toggle" onclick="toggleToLogin()">Retour</div>
+      </div>
+
+      <!-- Formulaire de réinitialisation de mot de passe après clic sur le lien -->
+      <div id="resetPasswordForm" style="display:none;">
+        <h3>Réinitialiser le mot de passe</h3>
+        <div class="form-group">
+          <label for="newPassword">Nouveau mot de passe</label>
+          <input type="password" id="newPassword" required />
+        </div>
+        <div class="form-group">
+          <label for="newPasswordConfirm">Confirme le nouveau mot de passe</label>
+          <input type="password" id="newPasswordConfirm" required />
+        </div>
+        <button id="resetPasswordButton">Mettre à jour le mot de passe</button>
+        <div class="toggle" onclick="toggleToLogin()">Retour</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- La bannière héroïque est définie plus haut dans le document -->
+  <main>
+    <!-- Section: Create -->
+    <section id="create" class="active">
+    <!-- Introduction à la création de fiche -->
+    <p style="max-width:700px; font-size:0.95rem; line-height:1.4; margin-top:0;">
+      Utilise ce formulaire pour créer une nouvelle fiche pédagogique décrivant ton projet : indique le niveau ou l’âge de tes élèves, les compétences ou disciplines mobilisées, la période envisagée, la pédagogie utilisée, les modalités, les mots‑clés et un résumé des objectifs.  Chaque fiche sera automatiquement analysée pour proposer des collaborations avec d’autres fiches et enrichir la plateforme.
+    </p>
+    <h2>Nouvelle fiche</h2>
+      <div class="card">
+        <!-- Nouveau champ pour le titre du projet -->
+        <div class="form-group">
+          <label for="title">Titre du projet</label>
+          <input id="title" type="text" placeholder="Ex : Voyage littéraire avec l’IA">
+        </div>
+        <div class="form-group">
+          <label for="level">Niveau / Âge</label>
+          <input id="level" type="text" placeholder="Ex : 13‑15 ans, secondaire, etc.">
+        </div>
+        <div class="form-group">
+          <label for="skills">Compétences / Disciplines (séparées par des virgules)</label>
+          <input id="skills" type="text" placeholder="Ex : mathématiques, sciences, art…">
+        </div>
+        <div class="form-group">
+          <label for="period">Période / Calendrier</label>
+          <input id="period" type="text" placeholder="Ex : semestre 1, octobre – décembre…">
+        </div>
+        <!-- Champ pour le type de pédagogie -->
+        <div class="form-group">
+          <label>Type de pédagogie</label>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; font-size:0.9rem;">
+            <label><input type="checkbox" name="pedagogy" value="pédagogie formelle"> pédagogie formelle</label>
+            <label><input type="checkbox" name="pedagogy" value="pédagogie non formelle"> pédagogie non formelle</label>
+            <label><input type="checkbox" name="pedagogy" value="école du dehors"> école du dehors</label>
+            <label><input type="checkbox" name="pedagogy" value="pédagogie par projet"> pédagogie par projet</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="modalities">Modalités pédagogiques</label>
+          <textarea id="modalities" rows="2" placeholder="Ex : ateliers pratiques, laboratoire, visites, etc."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="tags">Mots‑clés / Thèmes (séparés par des virgules)</label>
+          <input id="tags" type="text" placeholder="Ex : low‑tech, biodiversité, économie circulaire…">
+        </div>
+        <div class="form-group">
+          <label for="summary">Résumé / Objectifs</label>
+          <textarea id="summary" rows="3" placeholder="Décris brièvement l’intention pédagogique…"></textarea>
+        </div>
+        <button class="btn" id="addProject">Ajouter la fiche</button>
+      </div>
+      <h2>Fiches existantes</h2>
+      <div id="projects" class="projects-list"></div>
+    </section>
+
+    <!-- Section: Search (remplacée par un moteur de recherche étoffé avec filtres) -->
+    <section id="search">
+      <h2>Recherche de fiches</h2>
+      <p>Utilise ces filtres pour rechercher des fiches existantes&nbsp;: niveau, compétences, période, pédagogie, modalités, tags ou résumé. Tu peux également découvrir de nouvelles personnes via le mini‑jeu "Rencontre pédagogique" situé plus bas.</p>
+      <div id="searchFilters" class="card">
+        <div class="form-group">
+          <label for="searchLevel">Niveau / Âge</label>
+          <input id="searchLevel" type="text" placeholder="Ex : 13‑15 ans, secondaire…">
+        </div>
+        <div class="form-group">
+          <label for="searchSkills">Compétences / Disciplines (séparées par des virgules)</label>
+          <input id="searchSkills" type="text" placeholder="Ex : mathématiques, sciences, art…">
+        </div>
+        <div class="form-group">
+          <label for="searchPeriod">Période / Calendrier</label>
+          <input id="searchPeriod" type="text" placeholder="Ex : semestre 2, novembre…">
+        </div>
+        <div class="form-group">
+          <label>Type de pédagogie</label>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; font-size:0.9rem;">
+            <label><input type="checkbox" name="searchPedagogy" value="pédagogie formelle"> pédagogie formelle</label>
+            <label><input type="checkbox" name="searchPedagogy" value="pédagogie non formelle"> pédagogie non formelle</label>
+            <label><input type="checkbox" name="searchPedagogy" value="école du dehors"> école du dehors</label>
+            <label><input type="checkbox" name="searchPedagogy" value="pédagogie par projet"> pédagogie par projet</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="searchModalities">Modalités pédagogiques</label>
+          <input id="searchModalities" type="text" placeholder="Ex : ateliers, laboratoire, visites…">
+        </div>
+        <div class="form-group">
+          <label for="searchTags">Mots‑clés / Thèmes (séparées par des virgules)</label>
+          <input id="searchTags" type="text" placeholder="Ex : low‑tech, biodiversité…">
+        </div>
+        <div class="form-group">
+          <label for="searchSummary">Résumé / Objectifs</label>
+          <input id="searchSummary" type="text" placeholder="Décris en quelques mots…">
+        </div>
+        <button class="btn" id="applySearchFilters">Filtrer les fiches</button>
+      </div>
+      <div id="searchResults" class="projects-list" style="margin-top:1rem;"></div>
+      <h3 style="margin-top:2rem;">Matching pédagogique</h3>
+      <div id="meetContainer"></div>
+      <button class="btn" id="refreshMeet" style="margin-top:1rem;">Rafraîchir les profils</button>
+    </section>
+
+    <!-- Section: Resources -->
+    <section id="resources">
+      <h2>Ressources générées</h2>
+      <p>Retrouve ici les scénarios générés et les ressources associées.</p>
+      <div id="resourcesList"></div>
+      <button class="btn" id="exportData">Exporter JSON</button>
+      <input type="file" id="importFile" accept=".json" style="margin-top:1rem;">
+    </section>
+
+    <!-- Section: Profile (remplie par l’utilisateur) -->
+    <section id="profile">
+      <h2>Mon profil</h2>
+      <div class="card">
+        <p><strong>Nom :</strong> <span id="profileName"></span></p>
+        <p><strong>Email :</strong> <span id="profileEmail"></span></p>
+        <p><strong>Rôle :</strong> <span id="profileRole"></span></p>
+      </div>
+      <div class="card">
+        <h3>Questionnaire pédagogique</h3>
+        <div class="form-group">
+          <label for="profileSubject">Matière enseignée</label>
+          <input id="profileSubject" type="text" placeholder="Ex : mathématiques">
+        </div>
+        <div class="form-group">
+          <label for="profileClasses">Classes / niveaux</label>
+          <input id="profileClasses" type="text" placeholder="Ex : 5e, 6e">
+        </div>
+        <div class="form-group">
+          <label for="profileSdgs">Objectifs de développement durable préférés</label>
+          <input id="profileSdgs" type="text" placeholder="Ex : ODD 4, 12">
+          <!-- Ajout d’un lien informatif vers la page UNESCO expliquant les ODD -->
+          <small><a href="https://unesco.public.lu/fr/themes/ODD.html" target="_blank" rel="noopener noreferrer" style="color: var(--accent);">Que sont les ODD&nbsp;?</a></small>
+        </div>
+        <button class="btn" id="saveProfile">Enregistrer le profil</button>
+      </div>
+      <div class="card">
+        <h3>Mes fiches</h3>
+        <div id="myProjects"></div>
+      </div>
+      <div class="card">
+        <h3>Accès au Drive</h3>
+        <button class="btn" id="openDrive">Ouvrir le dossier Drive</button>
+      </div>
+
+      <!-- Demandes PDF : les utilisateurs peuvent téléverser et consulter leurs demandes au format PDF -->
+      <div class="card">
+        <h3>Demandes PDF</h3>
+        <div class="form-group">
+          <input id="demandFile" type="file" accept="application/pdf">
+          <button class="btn" id="uploadDemandBtn" style="margin-left:0.5rem;">Ajouter</button>
+        </div>
+        <ul id="demandList"></ul>
+      </div>
+    </section>
+
+    <!-- Section: Messages -->
+    <section id="messages">
+      <h2>Messagerie interne</h2>
+      <div id="messagesList"></div>
+    </section>
+
+  <!-- Section Rencontre : mini‑jeu de rencontre pédagogique pour liker/passer sur des fiches -->
+  <section id="meet">
+    <h2>Rencontre</h2>
+    <div id="meetView"></div>
+  </section>
+
+    <!-- Section: À propos -->
+    <section id="about">
+      <h2>À propos</h2>
+      <div class="card">
+        <h3>La plateforme</h3>
+        <p>Collaborativ Lab est une plateforme pédagogique locale imaginée par Äerdschëff asbl pour accompagner les enseignants et les citoyens dans la bifurcation écologique. Elle permet de créer et de partager des fiches de projets éducatifs, de comparer leurs compatibilités et de générer des scénarios transdisciplinaires grâce à l’IA. Son objectif est de favoriser l’intelligence collective, d’encourager des apprentissages basés sur la low‑tech, l’économie circulaire et l’inclusion, et de proposer des ressources concrètes pour des ateliers, des laboratoires ou des sorties « école du dehors ».</p>
+        <p>La plateforme fonctionne entièrement dans le navigateur, sans serveur central, afin de minimiser son impact carbone. Les utilisateurs créent un profil, renseignent leurs niveaux, disciplines et objectifs de développement durable, puis partagent leurs fiches. Le moteur de matching aide à identifier des synergies entre projets et à initier des collaborations. Les scénarios générés et validés enrichissent une base de connaissances commune accessible à toute la communauté.</p>
+      </div>
+      <div class="card">
+        <h3>Äerdschëff asbl</h3>
+        <p>Äerdschëff asbl est une association sans but lucratif qui promeut des pratiques écoresponsables et soutenables au Luxembourg. Inspirée par le manifeste « Low Tech Punk », elle défend une technologie simple, réparatrice et sobre, et milite pour une société post‑hiérarchique et inclusive. Son engagement se traduit par des formations, des ateliers et des projets éducatifs qui mêlent écocitoyenneté, permaculture et innovation soutenable.</p>
+        <p>L’association a conçu et construit l’Äerdschëff, un bâtiment bioclimatique unique en son genre, inspiré des Earthships. Édifié avec des matériaux recyclés et locaux, des pneus servant de masse thermique, il récupère l’eau de pluie, produit sa propre énergie grâce au solaire et bénéficie d’une isolation naturelle. Premier bâtiment public de ce type au monde, il est à la fois un lieu de vie autonome et un laboratoire vivant pour expérimenter des solutions circulaires.</p>
+        <p>Au-delà de l’architecture, Äerdschëff est un centre de recherche citoyenne et d’apprentissage pratique. Ses programmes dédiés à la science circulaire et régénérative permettent d’acquérir des compétences concrètes pour construire un avenir résilient. On peut s’y impliquer via des projets de permaculture, des chantiers participatifs, de la recherche citoyenne ou des stages pour les jeunes, en collaboration avec des institutions locales.</p>
+        <p>Le projet est né en 2014 et s’est concrétisé grâce à des citoyens, des financements publics et des bénévoles : phase de conception et formation (2014‑2017), construction participative (2019‑2022), puis ouverture en 2023 comme centre d’apprentissage permanent. Äerdschëff ambitionne de devenir un lieu de référence pour la bifurcation écologique au Luxembourg, en renforçant l’engagement citoyen, en développant des partenariats éducatifs et en contribuant à la mise en œuvre du Pacte Climat 2.0. L’association est basée à Redange/Attert et accessible via <a href="https://aerdscheff.lu" target="_blank" rel="noopener">aerdscheff.lu</a>.</p>
+      </div>
+    </section>
+
+    <!-- Section: Settings / Administration (affichée uniquement pour les administrateurs) -->
+    <section id="settings">
+      <h2>Administration</h2>
+      <div class="settings-grid">
+        <div class="card">
+          <h3>Clé API OpenAI</h3>
+          <div class="form-group">
+            <label for="apiKey">Clé secrète</label>
+            <input id="apiKey" type="password" placeholder="sk-…" autocomplete="off">
+          </div>
+          <button class="btn" id="saveApiKey">Enregistrer</button>
+        </div>
+        <!-- La configuration EmailJS est désormais gérée en dehors de l’application.  
+             On masque cette carte dans la console d’administration pour éviter toute confusion. -->
+        <div class="card" id="emailSettingsCard" style="display:none;">
+          <h3>Envoi des emails (EmailJS)</h3>
+          <p style="font-size:0.85rem;">La configuration EmailJS est désormais gérée en dehors de l’application.</p>
+          <p style="font-size:0.85rem;">Veuillez utiliser la console du fournisseur pour ajuster ces paramètres.</p>
+        </div>
+        <div class="card">
+          <h3>Budget mensuel (tokens)</h3>
+          <div class="form-group">
+            <label for="budget">Quota</label>
+            <input id="budget" type="number" min="1000" step="1000" value="10000">
+          </div>
+          <div class="progress-bar"><div id="tokenUsage"></div></div>
+        </div>
+        <div class="card">
+          <h3>Modèle & Température</h3>
+          <div class="form-group">
+            <label for="model">Modèle</label>
+            <select id="model">
+              <option value="gpt-4o">GPT‑4o</option>
+              <option value="gpt-4-turbo">GPT‑4‑Turbo</option>
+              <option value="gpt-3.5-turbo">GPT‑3.5‑Turbo</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="temperature">Température</label>
+            <input id="temperature" type="range" min="0" max="1" step="0.05" value="0.7">
+          </div>
+          <div class="form-group">
+            <label for="maxTokens">Nombre max de tokens</label>
+            <input id="maxTokens" type="number" min="50" max="2000" step="50" value="800">
+          </div>
+          <button class="btn" id="saveModel">Enregistrer</button>
+        </div>
+      </div>
+      <!-- Gestion des utilisateurs (visible uniquement pour les administrateurs) -->
+      <div class="card" id="userManagementCard" style="margin-top:1rem;">
+        <h3>Gestion des utilisateurs</h3>
+        <div id="userManagement"></div>
+      </div>
+
+      <!-- Personnalisation du design : affiché uniquement pour les administrateurs -->
+      <div class="card" id="designCard" style="margin-top:1rem; display:none;">
+        <h3>Personnalisation du design</h3>
+        <p style="font-size:0.85rem;">Modifiez ici l’apparence de la page d’accueil : slogan du bandeau, couleurs principales et image de fond.</p>
+        <div class="form-group">
+          <label for="designTagline">Slogan principal</label>
+          <input id="designTagline" type="text" placeholder="Collaborativ Lab – Äerdschëff">
+        </div>
+        <div class="form-group">
+          <label for="designAccentColor">Couleur d’accent</label>
+          <input id="designAccentColor" type="color" value="#e8877d">
+        </div>
+        <div class="form-group">
+          <label for="designAccentLightColor">Couleur d’accent claire</label>
+          <input id="designAccentLightColor" type="color" value="#f3b6ad">
+        </div>
+        <div class="form-group">
+          <label for="designBannerHeight">Hauteur du bandeau (px)</label>
+          <input id="designBannerHeight" type="range" min="200" max="600" step="10" value="300">
+        </div>
+        <div class="form-group">
+          <label for="designImageScale">Échelle horizontale de l’image (0.5–2)</label>
+          <input id="designImageScale" type="range" min="0.5" max="2" step="0.1" value="1">
+        </div>
+        <!-- Réglage du décalage vertical de l’image (permet de « croper » le bandeau sans modifier l’image) -->
+        <div class="form-group">
+          <label for="designBannerOffset">Décalage vertical (%)</label>
+          <input id="designBannerOffset" type="range" min="0" max="100" step="1" value="0">
+          <small>Fais glisser pour ajuster la partie visible de l’image dans le bandeau.</small>
+        </div>
+        <!-- Décalage vertical pour ajuster le cadrage de l’image de bandeau.  
+             0 % = haut de l’image, 100 % = bas de l’image. Cela permet au 
+             responsable de recadrer le bandeau sans éditer l’image originale. -->
+        <div class="form-group">
+          <label for="designBannerOffset">Décalage vertical (%)</label>
+          <input id="designBannerOffset" type="range" min="0" max="100" step="1" value="0">
+        </div>
+        <div class="form-group">
+          <label>Éléments décoratifs</label>
+          <div style="display:flex; gap:1rem; align-items:center; font-size:0.9rem;">
+            <label><input id="designShowCactus" type="checkbox" checked> Afficher le cactus</label>
+            <label><input id="designShowPig" type="checkbox" checked> Afficher le cochon</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="designHeroFile">Image de fond du bandeau héro</label>
+          <input id="designHeroFile" type="file" accept="image/*">
+          <img id="designHeroPreview" alt="Aperçu du bandeau" style="display:none; margin-top:0.5rem; max-width:100%; border-radius: var(--border-radius);" />
+        </div>
+        <div class="form-group">
+          <label for="designLogoFile">Logo de l’organisation</label>
+          <input id="designLogoFile" type="file" accept="image/*">
+          <img id="designLogoPreview" alt="Aperçu du logo" style="display:none; margin-top:0.5rem; max-width:100px; border-radius: var(--border-radius);" />
+        </div>
+        <div class="form-group">
+          <label><input id="designAutoCollab" type="checkbox"> Activer l’auto‑collaboration (IA)</label>
+          <small>Déclencheurs limités et quota respecté.</small>
+        </div>
+        <!-- Activation de l’onglet Rencontre (mini‑jeu de swipe) -->
+        <div class="form-group">
+          <label><input id="designEnableMeet" type="checkbox"> Activer l’onglet Rencontre</label>
+          <small>Permet aux enseignants de swiper des fiches et de créer des matchs.</small>
+        </div>
+        <button class="btn" id="saveDesign">Enregistrer le design</button>
+      </div>
+    </section>
+  </main>
+  <div class="soil-band"></div>
+
+  <!-- Pied de page de contact : informations de contact et lien vers le site Äerdschëff -->
+  <footer class="contact-info">
+    <p>Contact : <a href="https://aerdscheff.lu" target="_blank">Äerdschëff asbl</a> – 1 rue du lycée 8508 Redange/Attert</p>
+    <p>Responsable : tarik@aerdscheff.lu / 671.161.663</p>
+  </footer>
+
+  <!-- Modal de consultation d’un utilisateur (administration) -->
+  <div id="userInfoModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+    <div class="card" style="max-width:600px; width:90%; position:relative; max-height:80vh; overflow:auto;">
+      <button id="closeUserInfo" style="position:absolute; top:0.5rem; right:0.5rem; background:none; border:none; font-size:1.5rem; cursor:pointer;">×</button>
+      <div id="userInfoContent"></div>
+    </div>
+  </div>
+  <script>
+    // Data storage keys
+    const PROJECTS_KEY = 'aes_projects2';
+    const RESOURCES_KEY = 'aes_resources2';
+    const SETTINGS_KEY = 'aes_settings2';
+    const USERS_KEY = 'aes_users2';
+    const CURRENT_USER_KEY = 'aes_current_user2';
+    // FRAMES: clé de stockage pour les trames pédagogiques
+    const PEDAGOGICAL_FRAMES_KEY = 'aes_pedagogical_frames';
+    // MEET: clé de stockage pour les likes/passes/matchs de la rencontre
+    const LIKES_KEY = 'aes_likes';
+    // THEME: clé pour sauvegarder le thème sélectionné par l'utilisateur
+    const THEME_KEY = 'aes_theme';
+    // State variables
+    let projects = [];
+    let resources = [];
+    let settings = { apiKey: '', budget: 10000, used: 0, model: 'gpt-4o', temperature: 0.7, maxTokens: 800,
+                     emailServiceId: '', emailTemplateId: '', emailUserId: '',
+                     // Identifiant de modèle pour les emails de réinitialisation de mot de passe
+                     emailResetTemplateId: '',
+                     // Logo personnalisé (data URI) utilisé dans l'en-tête ; vide = logo par défaut
+                     logoImage: '',
+                     autoCollab: false,
+                     // MEET: active ou non l'onglet Rencontre (true = visible)
+                     enableMeet: false,
+                     // Dossier Google Drive où exporter les fiches; par défaut, on utilise le lien codé en dur
+                     driveFolderId: '',
+                     // Paramètres de personnalisation du design.  Ils sont stockés dans l’objet
+                     // « design » pour conserver la structure lors de la sérialisation.  La valeur
+                     // tagline remplace le slogan de la page d’accueil.  Les couleurs accent et
+                     // accentLight permettent d’ajuster la palette, et heroImage stocke un
+                     // data URI de l’image choisie pour le bandeau héro.
+                     design: { tagline: '', accent: '', accentLight: '', heroImage: '',
+                               // hauteur du bandeau (en pixels)
+                               height: 300,
+                               // facteur d’échelle pour la taille de l’image de fond (1 = taille par défaut)
+                               imageScale: 1,
+                               // Décalage vertical en pourcentage pour recadrer l’image de bandeau
+                               offsetY: 0,
+                               // visibilité des éléments décoratifs
+                               showCactus: true,
+                               showPig: true } };
+    let users = [];
+    let currentUser = null;
+
+    // FRAMES: stockage des trames pédagogiques chargées depuis localStorage.  Chaque entrée est un objet
+    // conforme au type PedagogicalFrame.  Voir schéma en commentaires pour la structure.
+    let frames = [];
+    // MEET: stockage des likes/passes/matchs pour la fonctionnalité de rencontre.  Il est
+    // initialisé par loadMeet() et persiste dans localStorage.
+    let meetStore = { likes: [], passes: [], matches: [] };
+
+    // MEET: deck d’indices de fiches à parcourir et position actuelle
+    let meetDeck = [];
+    let meetPos = 0;
+
+    // Trame actuellement sélectionnée lors de la création de fiche.  Null si aucune trame n’est active.
+    let currentFrame = null;
+
+    // Index du projet en cours d’édition.  Si non nul, la création de fiche mettra à jour
+    // la fiche existante correspondante.  Réinitialisé à null après la mise à jour.
+    let editProjectIndex = null;
+    // Données saisies par l’utilisateur dans les champs dynamiques de la trame.  Clé : id du champ,
+    // valeur : valeur saisie (string ou tableau pour les checkbox).  Ce sera stocké dans project.frameData.
+    let frameFieldValues = {};
+
+    // Variable temporaire pour stocker le Data URI de l’image du bandeau lorsqu’un fichier est sélectionné
+    let designHeroImage = null;
+
+    // Organisation API key (remplace les saisies individuelles)
+    const ORG_API_KEY = '';
+
+    // ---------- SECURITE / UTILITAIRES ----------
+
+    /**
+     * Crée un élément DOM avec un texte en toute sécurité (pas de HTML interprété).  Permet
+     * d’éviter les injections XSS en n’utilisant jamais innerHTML pour insérer du contenu
+     * provenant de l’utilisateur.  On peut passer des attributs via le troisième argument.
+     * @param {string} tag Nom de la balise à créer
+     * @param {string} [text] Texte intérieur (sera transformé en textContent)
+     * @param {Object} [attrs] Paires attribut/valeur à appliquer
+     * @returns {HTMLElement}
+     */
+    function el(tag, text = '', attrs = {}) {
+      const node = document.createElement(tag);
+      if (text !== null && text !== undefined) node.textContent = text;
+      for (const [k, v] of Object.entries(attrs)) {
+        if (v !== undefined && v !== null) node.setAttribute(k, String(v));
+      }
+      return node;
+    }
+
+    /**
+     * Construit un conteneur ligne contenant une étiquette forte suivie d’une valeur.  Utile pour
+     * afficher des paires clé/valeur dans un profil ou une fiche utilisateur.
+     * @param {string} label Étiquette à afficher en gras
+     * @param {string} value Valeur à afficher
+     * @returns {HTMLElement}
+     */
+    function row(label, value) {
+      const wrap = el('div', '');
+      wrap.append(el('strong', label + ' '), el('span', value || ''));
+      return wrap;
+    }
+
+    /**
+     * Dérive une clé et un hash PBKDF2 à partir d’un mot de passe.  Utilise WebCrypto pour
+     * effectuer 120000 itérations SHA‑256 et renvoie un objet contenant la clé dérivée et le sel
+     * utilisés (les deux encodés en Base64).  Si un sel est fourni, la dérivation sera
+     * déterministe ; sinon un sel aléatoire est généré.
+     * @param {string} password Le mot de passe en clair
+     * @param {string} [saltBase64] Sel en Base64 (facultatif)
+     * @returns {Promise<{hashB64: string, saltB64: string}>}
+     */
+    async function hashPassword(password, saltBase64) {
+      const enc = new TextEncoder();
+      const salt = saltBase64
+        ? Uint8Array.from(atob(saltBase64), c => c.charCodeAt(0))
+        : crypto.getRandomValues(new Uint8Array(16));
+      const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        enc.encode(password),
+        { name: 'PBKDF2' },
+        false,
+        ['deriveBits', 'deriveKey']
+      );
+      const key = await crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations: 120000, hash: 'SHA-256' },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        true,
+        ['encrypt', 'decrypt']
+      );
+      const raw = await crypto.subtle.exportKey('raw', key);
+      const hashB64 = btoa(String.fromCharCode(...new Uint8Array(raw)));
+      const saltB64 = saltBase64 || btoa(String.fromCharCode(...salt));
+      return { hashB64, saltB64 };
+    }
+
+    /**
+     * Vérifie un mot de passe en recalculant le PBKDF2 avec le même sel et en comparant le
+     * résultat.  Utilise crypto.timingSafeEqual si disponible pour éviter les attaques
+     * temporelles.
+     * @param {string} password Le mot de passe saisi
+     * @param {{hashB64: string, saltB64: string}} stored Objet contenant hash et sel enregistrés
+     * @returns {Promise<boolean>} True si le mot de passe correspond
+     */
+    async function verifyPassword(password, stored) {
+      if (!stored || !stored.hashB64 || !stored.saltB64) return false;
+      const { hashB64 } = await hashPassword(password, stored.saltB64);
+      if (crypto.timingSafeEqual) {
+        return crypto.timingSafeEqual(
+          Uint8Array.from(atob(hashB64), c => c.charCodeAt(0)),
+          Uint8Array.from(atob(stored.hashB64), c => c.charCodeAt(0))
+        );
+      } else {
+        return hashB64 === stored.hashB64;
+      }
+    }
+
+    // Load data from localStorage
+    function loadData() {
+      const prj = localStorage.getItem(PROJECTS_KEY);
+      if (prj) projects = JSON.parse(prj);
+      const res = localStorage.getItem(RESOURCES_KEY);
+      if (res) resources = JSON.parse(res);
+      const set = localStorage.getItem(SETTINGS_KEY);
+      if (set) settings = Object.assign(settings, JSON.parse(set));
+      // S’assurer que l’objet design existe et dispose des propriétés attendues.
+      if (!settings.design) {
+        settings.design = { tagline: '', accent: '', accentLight: '', heroImage: '', height: 300, showCactus: true, showPig: true };
+      } else {
+        settings.design.tagline = settings.design.tagline || '';
+        settings.design.accent = settings.design.accent || '';
+        settings.design.accentLight = settings.design.accentLight || '';
+        settings.design.heroImage = settings.design.heroImage || '';
+        // Valeurs par défaut pour les nouvelles propriétés
+        if (typeof settings.design.height !== 'number') settings.design.height = 300;
+        if (typeof settings.design.showCactus !== 'boolean') settings.design.showCactus = true;
+        if (typeof settings.design.showPig !== 'boolean') settings.design.showPig = true;
+        if (typeof settings.design.imageScale !== 'number') settings.design.imageScale = 1;
+      }
+      // ne pas surcharger la clé API si l’organisation ne l’a pas définie via l’interface
+      if (typeof settings.autoCollab !== 'boolean') settings.autoCollab = false;
+      // MEET: activer/désactiver l’onglet rencontre par défaut
+      if (typeof settings.enableMeet !== 'boolean') settings.enableMeet = false;
+      // MEET: identifiant du dossier Drive (pour l’export des fiches)
+      if (typeof settings.driveFolderId !== 'string') settings.driveFolderId = '';
+    }
+
+    // Load users from storage
+    function loadUsers() {
+      const u = localStorage.getItem(USERS_KEY);
+      if (u) users = JSON.parse(u);
+      // S'assurer que chaque utilisateur possède un tableau de demandes pour éviter les valeurs undefined
+      if (users && Array.isArray(users)) {
+        users.forEach((usr) => {
+          if (!usr.demands) usr.demands = [];
+        });
+      }
+      const cu = localStorage.getItem(CURRENT_USER_KEY);
+      if (cu) {
+        currentUser = JSON.parse(cu);
+        // S'assurer que le currentUser a également le tableau de demandes
+        if (currentUser && !currentUser.demands) currentUser.demands = [];
+      }
+    }
+    function saveUsers() {
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    }
+    function setCurrentUser(user) {
+      currentUser = user;
+      if (user) {
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+      } else {
+        localStorage.removeItem(CURRENT_USER_KEY);
+      }
+    }
+
+    // Afficher la modale d’authentification et donner le focus au panneau
+    function showAuthModal() {
+      const m = document.getElementById('authModal');
+      if (!m) return;
+      m.style.display = 'flex';
+      const panel = m.querySelector('.auth-content');
+      if (panel) panel.focus();
+    }
+    function hideAuthModal() {
+      const modal = document.getElementById('authModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    // Inscriptions et connexions
+    async function registerUser() {
+      const name = document.getElementById('registerName').value.trim();
+      const email = document.getElementById('registerEmail').value.trim().toLowerCase();
+      const pwd = document.getElementById('registerPassword').value;
+      if (!name || !email || !pwd) {
+        alert('Tous les champs sont requis.');
+        return;
+      }
+      if (users.find(u => u.email === email)) {
+        alert('Cet email est déjà utilisé.');
+        return;
+      }
+      // Déterminer le rôle : certaines adresses sont administratrices d’emblée
+      const role = (email === 'tarik@aerdscheff.lu' || email === 'monica@aerdscheff.lu') ? 'admin' : 'teacher';
+      // Générer le hash du mot de passe et le sel
+      const { hashB64, saltB64 } = await hashPassword(pwd);
+      // Générer un token de confirmation pour l’activation
+      const confirmationToken = Math.random().toString(36).slice(2, 12);
+      const newUser = {
+        name,
+        email,
+        password: undefined, // ne jamais stocker le mot de passe en clair
+        passwordHash: { hashB64, saltB64 },
+        role,
+        profile: { subject: '', classes: '', sdgs: '' },
+        messages: [],
+        // Marque immédiatement le compte comme confirmé pour simplifier l'accès sans email
+        confirmed: true,
+        confirmationToken,
+        registeredAt: new Date().toISOString(),
+        lastLoginAt: null
+        ,
+        // Liste des demandes PDF téléversées par l'utilisateur (objets { name, data })
+        demands: []
+      };
+      users.push(newUser);
+      saveUsers();
+      try {
+        sendConfirmationEmail(newUser);
+        alert('Compte créé ! Un email de confirmation a été envoyé.');
+      } catch {
+        alert('Compte créé, mais impossible d’envoyer l’email de confirmation.');
+      }
+      // basculer sur le formulaire de connexion
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('loginForm').style.display = 'block';
+    }
+
+    async function loginUser() {
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const pwd = document.getElementById('loginPassword').value;
+      const user = users.find(u => u.email === email);
+      if (!user) {
+        alert('Identifiants incorrects.');
+        return;
+      }
+      if (user.confirmed === false) {
+        alert('Valide d’abord ton inscription via le lien email.');
+        return;
+      }
+      const ok = await verifyPassword(pwd, user.passwordHash);
+      if (!ok) {
+        alert('Identifiants incorrects.');
+        return;
+      }
+      // Mettre à jour la date de dernière connexion
+      user.lastLoginAt = new Date().toISOString();
+      const idx = users.findIndex(u => u.email === user.email);
+      if (idx >= 0) {
+        users[idx] = user;
+        saveUsers();
+      }
+      setCurrentUser(user);
+      hideAuthModal();
+      document.getElementById('logoutBtn').style.display = 'inline-block';
+      updateUIForRole();
+      updateMessageBadge();
+      renderProfileSection();
+    }
+
+    function logoutUser() {
+      setCurrentUser(null);
+      showAuthModal();
+      document.getElementById('logoutBtn').style.display = 'none';
+      updateUIForRole();
+      updateMessageBadge();
+    }
+
+    // Toggle between login and register forms in the authentication modal.
+    // These helpers are assigned inline on the toggle elements to ensure
+    // that the switch works even if event listeners are not attached.
+    function toggleToRegister() {
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+      const forgotForm = document.getElementById('forgotPasswordForm');
+      const resetForm = document.getElementById('resetPasswordForm');
+      if (loginForm) loginForm.style.display = 'none';
+      if (registerForm) registerForm.style.display = 'block';
+      if (forgotForm) forgotForm.style.display = 'none';
+      if (resetForm) resetForm.style.display = 'none';
+    }
+
+    function toggleToLogin() {
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+      const forgotForm = document.getElementById('forgotPasswordForm');
+      const resetForm = document.getElementById('resetPasswordForm');
+      if (registerForm) registerForm.style.display = 'none';
+      if (loginForm) loginForm.style.display = 'block';
+      if (forgotForm) forgotForm.style.display = 'none';
+      if (resetForm) resetForm.style.display = 'none';
+    }
+
+    function saveProjects() {
+      localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+    }
+
+    function saveResources() {
+      localStorage.setItem(RESOURCES_KEY, JSON.stringify(resources));
+    }
+
+    function saveSettings() {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    }
+
+    // ---------- MOTS DE PASSE OUBLIÉS ----------
+    // Passe au formulaire « mot de passe oublié »
+    function toggleToForgotPassword() {
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+      const forgotForm = document.getElementById('forgotPasswordForm');
+      const resetForm = document.getElementById('resetPasswordForm');
+      if (loginForm) loginForm.style.display = 'none';
+      if (registerForm) registerForm.style.display = 'none';
+      if (resetForm) resetForm.style.display = 'none';
+      if (forgotForm) forgotForm.style.display = 'block';
+    }
+
+    /**
+     * Affiche le formulaire de réinitialisation pour un jeton donné.
+     * Le jeton est stocké dans l’attribut data-resetToken du formulaire pour être récupéré
+     * lors de la soumission du nouveau mot de passe.  La modale est affichée.
+     * @param {string} token Jeton de réinitialisation contenu dans l’URL
+     */
+    function showResetPasswordForm(token) {
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+      const forgotForm = document.getElementById('forgotPasswordForm');
+      const resetForm = document.getElementById('resetPasswordForm');
+      if (loginForm) loginForm.style.display = 'none';
+      if (registerForm) registerForm.style.display = 'none';
+      if (forgotForm) forgotForm.style.display = 'none';
+      if (resetForm) {
+        resetForm.style.display = 'block';
+        resetForm.dataset.resetToken = token;
+      }
+      // afficher la modale d’authentification
+      showAuthModal();
+    }
+
+    /**
+     * Envoie un email de réinitialisation de mot de passe via EmailJS en utilisant
+     * le template de réinitialisation défini dans les paramètres.  Si les identifiants
+     * EmailJS ne sont pas configurés, la fonction se contente de consigner un avertissement.
+     * @param {Object} user L’utilisateur cible
+     */
+    function sendPasswordResetEmail(user) {
+      if (!settings.emailServiceId || !settings.emailResetTemplateId || !settings.emailUserId) {
+        console.warn('EmailJS non configuré pour la réinitialisation de mot de passe.');
+        return;
+      }
+      if (typeof emailjs === 'undefined' || !emailjs) {
+        console.warn('Bibliothèque EmailJS non chargée.');
+        return;
+      }
+      emailjs.init(settings.emailUserId);
+      const baseUrl = window.location.href.split('?')[0];
+      const resetLink = baseUrl + '?reset=' + encodeURIComponent(user.resetToken);
+      const templateParams = {
+        to_email: user.email,
+        to_name: user.name || user.email,
+        reset_link: resetLink
+      };
+      return emailjs.send(settings.emailServiceId, settings.emailResetTemplateId, templateParams);
+    }
+
+    /**
+     * Gère l’envoi du lien de réinitialisation du mot de passe après saisie de l’adresse email.
+     * Génère un jeton aléatoire, le stocke sur l’utilisateur et tente d’envoyer un email.
+     */
+    async function sendResetLink() {
+      const emailInput = document.getElementById('forgotEmail');
+      const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+      if (!email) {
+        alert('Merci de saisir votre email.');
+        return;
+      }
+      const user = users.find(u => u.email === email);
+      if (!user) {
+        alert('Aucun compte trouvé pour cet email.');
+        return;
+      }
+      const token = Math.random().toString(36).slice(2, 12);
+      user.resetToken = token;
+      user.resetTokenCreatedAt = new Date().toISOString();
+      saveUsers();
+      // Construire le lien de réinitialisation
+      const baseUrl = window.location.href.split('?')[0];
+      const resetLink = baseUrl + '?reset=' + encodeURIComponent(token);
+      // Si EmailJS n’est pas configuré ou la bibliothèque non chargée, proposer le lien directement
+      const noEmailJs = !settings.emailServiceId || !settings.emailResetTemplateId || !settings.emailUserId || typeof emailjs === 'undefined' || !emailjs;
+      if (noEmailJs) {
+        alert('EmailJS n’est pas configuré. Copie/colle ce lien dans ton navigateur pour réinitialiser ton mot de passe :\n' + resetLink);
+      } else {
+        try {
+          sendPasswordResetEmail(user);
+          alert('Un email de réinitialisation a été envoyé si l’adresse existe dans nos dossiers.');
+        } catch (err) {
+          console.warn('Erreur lors de l’envoi du mail de réinitialisation', err);
+          alert('Échec de l’envoi de l’email de réinitialisation.');
+        }
+      }
+      toggleToLogin();
+    }
+
+    /**
+     * Réinitialise le mot de passe à partir du formulaire de réinitialisation.
+     * Compare les mots de passe saisis et met à jour le hash.  Supprime le jeton.
+     */
+    async function resetPassword() {
+      const resetForm = document.getElementById('resetPasswordForm');
+      const token = resetForm ? resetForm.dataset.resetToken : '';
+      const newPwdElem = document.getElementById('newPassword');
+      const confPwdElem = document.getElementById('newPasswordConfirm');
+      const newPwd = newPwdElem ? newPwdElem.value : '';
+      const newPwdConf = confPwdElem ? confPwdElem.value : '';
+      if (!newPwd || !newPwdConf) {
+        alert('Merci de saisir le nouveau mot de passe deux fois.');
+        return;
+      }
+      if (newPwd !== newPwdConf) {
+        alert('Les mots de passe ne correspondent pas.');
+        return;
+      }
+      if (!token) {
+        alert('Jeton de réinitialisation manquant.');
+        return;
+      }
+      const user = users.find(u => u.resetToken === token);
+      if (!user) {
+        alert('Jeton invalide ou expiré.');
+        return;
+      }
+      const { hashB64, saltB64 } = await hashPassword(newPwd);
+      user.passwordHash = { hashB64, saltB64 };
+      delete user.resetToken;
+      delete user.resetTokenCreatedAt;
+      saveUsers();
+      alert('Mot de passe réinitialisé ! Vous pouvez maintenant vous connecter.');
+      toggleToLogin();
+    }
+
+    // Render project cards sans innerHTML (prévention XSS)
+    function renderProjects() {
+      const container = document.getElementById('projects');
+      container.innerHTML = '';
+      if (!projects.length) {
+        container.append(el('p', 'Aucune fiche enregistrée. Commence par en créer une ci‑dessus !'));
+        return;
+      }
+      projects.forEach(p => {
+        const card = el('div', '', { class: 'project-card' });
+        card.append(
+          // Afficher le titre si présent, sinon le niveau
+          el('h3', p.title || p.level || 'Sans titre'),
+          // Matières / compétences principales
+          el('p', 'Matières : ' + (p.skills && p.skills.length ? p.skills.join(', ') : '—'), { style: 'margin:0 0 0.25rem 0; font-size:0.85rem; color:#555;' }),
+          // Période / calendrier
+          el('small', 'Période : ' + (p.period || '—')),
+          el('br'),
+          // Types de pédagogie
+          (p.pedagogy && p.pedagogy.length ? el('small', 'Pédagogie : ' + p.pedagogy.join(', ')) : el('small', '')),
+          el('br'),
+          // Mots-clés
+          el('small', 'Mots‑clés : ' + (p.tags && p.tags.length ? p.tags.join(', ') : '—')),
+          el('br'),
+          // Résumé
+          el('p', p.summary || '')
+        );
+        container.append(card);
+      });
+    }
+
+    // Render matching controls: checkboxes for each project
+    function renderMatchControls() {
+      const container = document.getElementById('matchControls');
+      container.innerHTML = '';
+      projects.forEach((p, idx) => {
+        const label = document.createElement('label');
+        label.style.display = 'flex';
+        label.style.alignItems = 'center';
+        label.style.gap = '0.25rem';
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.value = idx;
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(p.level || 'Fiche ' + (idx+1)));
+        container.appendChild(label);
+      });
+    }
+
+    // Add a new project
+    function addProject() {
+      const title = document.getElementById('title').value.trim();
+      const level = document.getElementById('level').value.trim();
+      const skills = document.getElementById('skills').value.split(',').map(s => s.trim()).filter(s => s);
+      const period = document.getElementById('period').value.trim();
+      const modalities = document.getElementById('modalities').value.trim();
+      const tags = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t);
+      const summary = document.getElementById('summary').value.trim();
+      // Récupérer les types de pédagogie sélectionnés
+      const pedagogy = Array.from(document.querySelectorAll('input[name="pedagogy"]:checked')).map(cb => cb.value);
+      if (!title || !summary) {
+        alert('Merci d’indiquer au moins un titre et un résumé.');
+        return;
+      }
+      const project = { title, level, skills, period, modalities, tags, summary, pedagogy, createdAt: Date.now() };
+      // associer l’utilisateur courant
+      project.owner = currentUser ? currentUser.email : null;
+      projects.push(project);
+      saveProjects();
+      renderProjects();
+      // Générer et présenter un aperçu au format .doc avant l’export automatique
+      try {
+        generateDocPreview(project);
+      } catch (err) {
+        console.warn('Prévisualisation .doc impossible :', err);
+      }
+      // Proposer l’export vers Google Drive
+      try {
+        uploadProjectToDrive(project);
+      } catch (err) {
+        console.warn('Impossible de lancer l’export Drive :', err);
+      }
+      // Clear fields
+      document.getElementById('title').value = '';
+      document.getElementById('level').value = '';
+      document.getElementById('skills').value = '';
+      document.getElementById('period').value = '';
+      document.getElementById('modalities').value = '';
+      document.getElementById('tags').value = '';
+      document.getElementById('summary').value = '';
+      // Réinitialiser les cases à cocher de pédagogie
+      document.querySelectorAll('input[name="pedagogy"]').forEach(cb => cb.checked = false);
+
+      // S’assurer que nous sortons du mode édition
+      editProjectIndex = null;
+      const addBtn2 = document.getElementById('addProject');
+      if (addBtn2) addBtn2.textContent = 'Ajouter la fiche';
+
+      // Lancer une proposition automatique de collaboration seulement si l’auto‑collab est activée,
+      // qu’une clé API est définie et que nous n’avons pas dépassé 80 % du quota.
+      if (settings.autoCollab && settings.apiKey && settings.used < (settings.budget * 0.8)) {
+        runAutoMatch(project);
+      }
+    }
+
+    // Préparer un fichier JSON et inviter à l’export vers Google Drive
+    function uploadProjectToDrive(project) {
+      // Créer un nom de fichier unique
+      const fileName = 'aerdscheff_project_' + (project.title || project.level || 'sans_titre') + '_' + new Date(project.createdAt).toISOString().slice(0,10) + '.json';
+      const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      // déclencher un téléchargement local pour que l’utilisateur ait le fichier
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      // ouvrir le dossier Google Drive dans un nouvel onglet
+      window.open('https://drive.google.com/drive/u/0/folders/1ABed01uah-bGYdWoYWLrxlCDvVgvBNBa', '_blank');
+      alert('Le fichier de la fiche a été téléchargé. Téléverse-le dans le dossier Drive ouvert dans un nouvel onglet.');
+    }
+
+  /**
+   * Charge une fiche existante dans le formulaire de création pour modification.
+   * Remplit tous les champs et active le mode édition via la variable editProjectIndex.
+   * @param {number} index - l’index du projet dans le tableau global projects
+   */
+  function loadProjectForEdit(index) {
+    if (index == null || index < 0 || index >= projects.length) return;
+    const p = projects[index];
+    // Renseigner les champs du formulaire
+    document.getElementById('title').value = p.title || '';
+    document.getElementById('level').value = p.level || '';
+    document.getElementById('skills').value = (p.skills && p.skills.length ? p.skills.join(', ') : '');
+    document.getElementById('period').value = p.period || '';
+    document.getElementById('modalities').value = p.modalities || '';
+    document.getElementById('tags').value = (p.tags && p.tags.length ? p.tags.join(', ') : '');
+    document.getElementById('summary').value = p.summary || '';
+    // Cases à cocher de pédagogie
+    document.querySelectorAll('input[name="pedagogy"]').forEach(cb => {
+      cb.checked = p.pedagogy && p.pedagogy.includes(cb.value);
+    });
+    // Stocker l’index pour la mise à jour
+    editProjectIndex = index;
+    // Mettre à jour le libellé du bouton
+    const addBtn = document.getElementById('addProject');
+    if (addBtn) addBtn.textContent = 'Mettre à jour la fiche';
+  }
+
+  /**
+   * Met à jour la fiche existante indiquée par editProjectIndex avec les valeurs du formulaire.
+   * Génère un nouveau document .doc de prévisualisation et propose un nouvel export Drive.
+   */
+  function updateProject() {
+    if (editProjectIndex == null || editProjectIndex < 0 || editProjectIndex >= projects.length) return;
+    const title = document.getElementById('title').value.trim();
+    const level = document.getElementById('level').value.trim();
+    const skills = document.getElementById('skills').value.split(',').map(s => s.trim()).filter(s => s);
+    const period = document.getElementById('period').value.trim();
+    const modalities = document.getElementById('modalities').value.trim();
+    const tags = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t);
+    const summary = document.getElementById('summary').value.trim();
+    const pedagogy = Array.from(document.querySelectorAll('input[name="pedagogy"]:checked')).map(cb => cb.value);
+    if (!title || !summary) {
+      alert('Merci d’indiquer au moins un titre et un résumé.');
+      return;
+    }
+    // Mettre à jour l’objet projet
+    const p = projects[editProjectIndex];
+    p.title = title;
+    p.level = level;
+    p.skills = skills;
+    p.period = period;
+    p.modalities = modalities;
+    p.tags = tags;
+    p.summary = summary;
+    p.pedagogy = pedagogy;
+    p.updatedAt = Date.now();
+    projects[editProjectIndex] = p;
+    saveProjects();
+    renderProjects();
+    renderMyProjects();
+    try {
+      generateDocPreview(p);
+    } catch (err) {
+      console.warn('Prévisualisation .doc impossible :', err);
+    }
+    try {
+      uploadProjectToDrive(p);
+    } catch (err) {
+      console.warn('Impossible de lancer l’export Drive :', err);
+    }
+    // Réinitialiser le formulaire et l’état
+    document.getElementById('title').value = '';
+    document.getElementById('level').value = '';
+    document.getElementById('skills').value = '';
+    document.getElementById('period').value = '';
+    document.getElementById('modalities').value = '';
+    document.getElementById('tags').value = '';
+    document.getElementById('summary').value = '';
+    document.querySelectorAll('input[name="pedagogy"]').forEach(cb => cb.checked = false);
+    // Réinitialiser l’index et le libellé du bouton
+    editProjectIndex = null;
+    const addBtn = document.getElementById('addProject');
+    if (addBtn) addBtn.textContent = 'Ajouter la fiche';
+    alert('Fiche mise à jour !');
+  }
+
+  /**
+   * Génère un aperçu au format .doc de la fiche afin que l’utilisateur puisse la consulter
+   * avant l’export automatique vers le Drive. Le document est généré en HTML, puis
+   * encapsulé dans un Blob avec le type application/msword. Word et LibreOffice savent
+   * interpréter ce format. Le fichier s’ouvre dans un nouvel onglet.
+   * @param {Object} project – fiche pédagogique à présenter
+   */
+  function generateDocPreview(project) {
+    if (!project) return;
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>` +
+      `<h1>${project.title || project.level || 'Sans titre'}</h1>` +
+      `<p><strong>Niveau / Âge :</strong> ${project.level || '—'}</p>` +
+      `<p><strong>Matières / compétences :</strong> ${project.skills && project.skills.length ? project.skills.join(', ') : '—'}</p>` +
+      `<p><strong>Période / calendrier :</strong> ${project.period || '—'}</p>` +
+      `<p><strong>Type de pédagogie :</strong> ${(project.pedagogy && project.pedagogy.length) ? project.pedagogy.join(', ') : '—'}</p>` +
+      `<p><strong>Modalités pédagogiques :</strong> ${project.modalities || '—'}</p>` +
+      `<p><strong>Mots‑clés :</strong> ${project.tags && project.tags.length ? project.tags.join(', ') : '—'}</p>` +
+      `<p><strong>Résumé / objectifs :</strong><br>${project.summary || ''}</p>` +
+      `</body></html>`;
+    const blob = new Blob([html], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    // ouvrir un nouvel onglet pour prévisualiser le document
+    window.open(url, '_blank');
+    // Optionnel : révoquer l’URL après quelques secondes pour libérer la mémoire
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+
+    // Calculate match between two selected projects
+    function calculateMatch() {
+      const checkboxes = document.querySelectorAll('#matchControls input[type=checkbox]');
+      const selected = Array.from(checkboxes).filter(cb => cb.checked).map(cb => parseInt(cb.value));
+      if (selected.length !== 2) {
+        alert('Choisis exactement deux fiches pour le matching.');
+        return;
+      }
+      const [a, b] = selected;
+      const p1 = projects[a];
+      const p2 = projects[b];
+      const sharedSkills = p1.skills.filter(s => p2.skills.includes(s));
+      const sharedTags = p1.tags.filter(t => p2.tags.includes(t));
+      const score = (sharedSkills.length + sharedTags.length) / (Math.max(p1.skills.length + p1.tags.length, 1)) * 100;
+      const results = document.getElementById('matchResults');
+      results.style.display = 'block';
+      results.innerHTML = `
+        <h3>Compatibilité : ${score.toFixed(0)} %</h3>
+        <p>Compétences communes : ${sharedSkills.join(', ') || 'aucune'}</p>
+        <p>Tags communs : ${sharedTags.join(', ') || 'aucun'}</p>
+        <button class="btn" id="generateScenario">Générer un scénario pédagogique</button>
+      `;
+      document.getElementById('generateScenario').addEventListener('click', () => generateScenario(p1, p2));
+    }
+
+    // Generate a scenario using OpenAI
+    async function generateScenario(p1, p2) {
+      if (!settings.apiKey) {
+        alert('Renseigne ta clé API dans les paramètres.');
+        return;
+      }
+      const prompt = [
+        { role: 'system', content: 'Tu es un facilitateur pédagogique pour Äerdschëff. À partir de deux fiches (niveau, compétences, période, modalités, tags, résumé), tu crées un scénario transdisciplinaire qui favorise la bifurcation écologique et l’économie circulaire. Le scénario doit être sobre, inclusif et adaptable.' },
+        { role: 'user', content: 'Fiche A:\nNiveau: ' + p1.level + '\nCompétences: ' + p1.skills.join(', ') + '\nPériode: ' + p1.period + '\nModalités: ' + p1.modalities + '\nTags: ' + p1.tags.join(', ') + '\nRésumé: ' + p1.summary },
+        { role: 'user', content: 'Fiche B:\nNiveau: ' + p2.level + '\nCompétences: ' + p2.skills.join(', ') + '\nPériode: ' + p2.period + '\nModalités: ' + p2.modalities + '\nTags: ' + p2.tags.join(', ') + '\nRésumé: ' + p2.summary },
+        { role: 'user', content: 'Propose un scénario détaillé avec objectifs, activités, ressources nécessaires et indicateurs de réussite.' }
+      ];
+      const options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + settings.apiKey
+        },
+        body: JSON.stringify({
+          model: settings.model || 'gpt-4o',
+          messages: prompt,
+          temperature: parseFloat(settings.temperature) || 0.7,
+          max_tokens: parseInt(settings.maxTokens) || 800
+        })
+      };
+      const results = document.getElementById('matchResults');
+      // Afficher un message de chargement sans utiliser innerHTML
+      if (results) {
+        results.innerHTML = '';
+        results.append(el('p', 'Génération en cours…'));
+      }
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', options);
+        if (!response.ok) {
+          throw new Error('Erreur API : ' + response.statusText);
+        }
+        const data = await response.json();
+        const content = data.choices[0].message.content.trim();
+        const tokensUsed = data.usage ? data.usage.total_tokens : content.length / 2;
+        settings.used = (settings.used || 0) + tokensUsed;
+        // Calculer une estimation de la taille en kilo-octets pour l’empreinte mémoire
+        const kb = Math.round((JSON.stringify(prompt).length + (content?.length || 0)) / 1024);
+        console.info(`[IA] ~${tokensUsed} tokens, ~${kb} kB`);
+        updateTokenUsage();
+        saveSettings();
+        // Save resource
+        const res = {
+          date: new Date().toISOString(),
+          projectIndices: [projects.indexOf(p1), projects.indexOf(p2)],
+          content: content
+        };
+        resources.push(res);
+        saveResources();
+        if (results) {
+          results.innerHTML = '';
+          const h3 = el('h3', 'Scénario généré');
+          const pre = el('pre', content || '');
+          pre.style.whiteSpace = 'pre-wrap';
+          results.append(h3, pre);
+        }
+        renderResources();
+
+        // Envoyer un message aux propriétaires des fiches pour les notifier du nouveau scénario
+        const owners = [];
+        if (p1.owner) owners.push(p1.owner);
+        if (p2.owner && p2.owner !== p1.owner) owners.push(p2.owner);
+        owners.forEach(email => {
+          sendMessage(email, 'Nouvelle collaboration', 'Un nouveau scénario a été généré pour vos fiches. Consultez l’onglet Ressources pour en savoir plus.');
+        });
+      } catch (err) {
+        if (results) {
+          results.innerHTML = '';
+          results.append(el('p', 'Une erreur s’est produite : ' + err.message));
+        }
+      }
+    }
+
+    // Render resources list
+    function renderResources() {
+      const container = document.getElementById('resourcesList');
+      container.innerHTML = '';
+      if (!resources.length) {
+        container.append(el('p', 'Aucune ressource enregistrée.'));
+        return;
+      }
+      resources.forEach((r, idx) => {
+        const div = el('div', '', { class: 'card' });
+        const date = new Date(r.date).toLocaleString();
+        const h3 = el('h3', 'Scénario ' + (idx + 1));
+        const meta = el('small', 'Généré le ' + date);
+        const ass = el('p', 'Fiches associées : ' + (r.projectIndices.map(i => projects[i]?.level || ('Fiche ' + (i + 1))).join(' + ')));
+        const details = el('details');
+        const summary = el('summary', 'Voir le contenu');
+        const pre = el('pre', r.content || '');
+        pre.style.whiteSpace = 'pre-wrap';
+        details.append(summary, pre);
+        div.append(h3, meta, ass, details);
+        container.append(div);
+      });
+    }
+
+    /**
+     * Affiche la liste des fiches en fonction d’une requête de recherche.
+     * La recherche est effectuée sur les champs niveau, compétences, période,
+     * type de pédagogie, modalités, tags et résumé.  Si la requête est vide,
+     * toutes les fiches sont affichées.
+     * @param {string} query
+     */
+    function renderSearchResults(query = '') {
+      const container = document.getElementById('searchResults');
+      if (!container) return;
+      container.innerHTML = '';
+      const q = query.trim().toLowerCase();
+      if (!projects.length) {
+        container.append(el('p', 'Aucune fiche enregistrée.'));
+        return;
+      }
+      const filtered = projects.filter(p => {
+        if (!q) return true;
+        const fields = [
+          p.title,
+          p.level,
+          (p.skills || []).join(' '),
+          p.period,
+          (p.pedagogy || []).join(' '),
+          p.modalities,
+          (p.tags || []).join(' '),
+          p.summary
+        ].filter(Boolean).join(' ').toLowerCase();
+        return fields.includes(q);
+      });
+      if (!filtered.length) {
+        container.append(el('p', 'Aucun résultat trouvé.'));
+        return;
+      }
+      filtered.forEach(p => {
+        const card = el('div', '', { class: 'project-card' });
+        card.append(
+          el('h3', p.title || p.level || 'Sans titre'),
+          el('p', 'Matières : ' + ((p.skills && p.skills.length) ? p.skills.join(', ') : '—'), { style: 'margin:0 0 0.25rem 0; font-size:0.85rem; color:#555;' }),
+          el('small', 'Période : ' + (p.period || '—')),
+          el('br'),
+          (p.pedagogy && p.pedagogy.length ? el('small', 'Pédagogie : ' + p.pedagogy.join(', ')) : el('small', '')),
+          el('br'),
+          el('small', 'Mots‑clés : ' + ((p.tags && p.tags.length) ? p.tags.join(', ') : '—')),
+          el('br'),
+          el('p', p.summary || '')
+        );
+        container.append(card);
+      });
+    }
+
+    /**
+     * Détermine automatiquement la meilleure compatibilité pour un projet nouvellement créé
+     * et génère un scénario sans afficher le résultat dans l’interface de recherche.  Cette
+     * fonction utilise une version silencieuse de generateScenario qui ne met pas à jour
+     * la section des résultats mais crée la ressource et envoie un message aux propriétaires.
+     * @param {Object} newProject – le projet nouvellement ajouté
+     */
+    function runAutoMatch(newProject) {
+      // ne pas tenter un matching si l’API n’est pas configurée ou s’il y a moins de deux fiches
+      if (!settings.apiKey || projects.length < 2) return;
+      // Trouver l’index du nouveau projet dans la liste
+      const newIndex = projects.indexOf(newProject);
+      if (newIndex < 0) return;
+      let bestIndex = -1;
+      let bestScore = 0;
+      projects.forEach((p, idx) => {
+        if (idx === newIndex) return;
+        // calculer l’intersection des compétences et des tags
+        const sharedSkills = newProject.skills.filter(s => p.skills.includes(s));
+        const sharedTags = newProject.tags.filter(t => p.tags.includes(t));
+        const totalFields = (newProject.skills.length + newProject.tags.length) || 1;
+        const score = (sharedSkills.length + sharedTags.length) / totalFields;
+        if (score > bestScore) {
+          bestScore = score;
+          bestIndex = idx;
+        }
+      });
+      // si aucune compatibilité n’est trouvée (score = 0), ne rien faire
+      if (bestIndex >= 0 && bestScore > 0) {
+        const p2 = projects[bestIndex];
+        generateScenarioSilent(newProject, p2);
+      }
+    }
+
+    /**
+     * Version silencieuse de generateScenario : génère un scénario via l’API et enregistre
+     * la ressource et les messages, sans afficher d’interface.  Cette fonction ne modifie
+     * pas la section matchResults.
+     * @param {Object} p1
+     * @param {Object} p2
+     */
+    async function generateScenarioSilent(p1, p2) {
+      // Vérifier la clé API
+      if (!settings.apiKey) return;
+      const prompt = [
+        { role: 'system', content: 'Tu es un facilitateur pédagogique pour Äerdschëff. À partir de deux fiches (niveau, compétences, période, modalités, tags, résumé), tu crées un scénario transdisciplinaire qui favorise la bifurcation écologique et l’économie circulaire. Le scénario doit être sobre, inclusif et adaptable.' },
+        { role: 'user', content: 'Fiche A:\nNiveau: ' + p1.level + '\nCompétences: ' + p1.skills.join(', ') + '\nPériode: ' + p1.period + '\nModalités: ' + p1.modalities + '\nTags: ' + p1.tags.join(', ') + '\nRésumé: ' + p1.summary },
+        { role: 'user', content: 'Fiche B:\nNiveau: ' + p2.level + '\nCompétences: ' + p2.skills.join(', ') + '\nPériode: ' + p2.period + '\nModalités: ' + p2.modalities + '\nTags: ' + p2.tags.join(', ') + '\nRésumé: ' + p2.summary },
+        { role: 'user', content: 'Propose un scénario détaillé avec objectifs, activités, ressources nécessaires et indicateurs de réussite.' }
+      ];
+      const options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + settings.apiKey
+        },
+        body: JSON.stringify({
+          model: settings.model || 'gpt-4o',
+          messages: prompt,
+          temperature: parseFloat(settings.temperature) || 0.7,
+          max_tokens: parseInt(settings.maxTokens) || 800
+        })
+      };
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', options);
+        if (!response.ok) {
+          throw new Error('Erreur API : ' + response.statusText);
+        }
+        const data = await response.json();
+        const content = data.choices[0].message.content.trim();
+        const tokensUsed = data.usage ? data.usage.total_tokens : content.length / 2;
+        settings.used = (settings.used || 0) + tokensUsed;
+        const kb = Math.round((JSON.stringify(prompt).length + (content?.length || 0)) / 1024);
+        console.info(`[IA] ~${tokensUsed} tokens, ~${kb} kB`);
+        updateTokenUsage();
+        saveSettings();
+        // Enregistrer la ressource
+        const res = {
+          date: new Date().toISOString(),
+          projectIndices: [projects.indexOf(p1), projects.indexOf(p2)],
+          content: content
+        };
+        resources.push(res);
+        saveResources();
+        // Envoyer un message aux propriétaires des fiches
+        const owners = [];
+        if (p1.owner) owners.push(p1.owner);
+        if (p2.owner && p2.owner !== p1.owner) owners.push(p2.owner);
+        owners.forEach(email => {
+          sendMessage(email, 'Nouvelle proposition de collaboration', 'Un scénario a été généré automatiquement pour votre fiche. Rendez-vous dans l’onglet Ressources ou Messagerie pour le consulter.');
+        });
+      } catch (err) {
+        console.warn('Erreur lors de la génération automatique :', err);
+      }
+    }
+
+    // Token usage bar
+    function updateTokenUsage() {
+      const bar = document.getElementById('tokenUsage');
+      const percent = Math.min(settings.used / settings.budget * 100, 100);
+      bar.style.width = percent + '%';
+    }
+
+    // Export and import
+    function exportData() {
+      const data = {
+        projects,
+        resources,
+        settings
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'aerdscheff_data.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    function importData(file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const obj = JSON.parse(e.target.result);
+          projects = obj.projects || [];
+          resources = obj.resources || [];
+          settings = Object.assign(settings, obj.settings || {});
+          saveProjects();
+          saveResources();
+          saveSettings();
+          renderProjects();
+          renderResources();
+          updateTokenUsage();
+          alert('Importation réussie.');
+        } catch (err) {
+          alert('Fichier invalide : ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // ----- Gestion des rôles, profils et messagerie interne -----
+
+    // Met à jour l’affichage en fonction du rôle de l’utilisateur connecté
+    function updateUIForRole() {
+      const adminTab = document.getElementById('adminTab');
+      if (adminTab) {
+        if (currentUser && currentUser.role === 'admin') {
+          adminTab.style.display = 'inline-block';
+        } else {
+          adminTab.style.display = 'none';
+        }
+      }
+      // Afficher l’onglet Rencontre uniquement si un utilisateur est connecté et que l’option est activée
+      // L’onglet Rencontre a été supprimé du menu principal.  Rien à faire ici.
+      // Mettre à jour la barre utilisateur
+      updateUserMenu();
+    }
+
+    /**
+     * Met à jour l’affichage de la barre utilisateur.  Affiche le badge avec l’initiale
+     * de l’utilisateur, ses liens Profil/Messages/Déconnexion, et masque la barre
+     * lorsque personne n’est connecté.
+     */
+    function updateUserMenu() {
+      const userBar = document.getElementById('userBar');
+      const badge = document.getElementById('userBadge');
+      const btnProfile = document.getElementById('navProfile');
+      const btnMessages = document.getElementById('navMessages');
+      const logoutButton = document.getElementById('logoutBtn');
+      if (!userBar || !badge || !btnProfile || !btnMessages || !logoutButton) return;
+      if (currentUser) {
+        userBar.style.display = 'flex';
+        // update badge with first letter of name or email
+        const name = currentUser.name || currentUser.email || '';
+        badge.textContent = name.trim().charAt(0).toUpperCase();
+        // show user links
+        btnProfile.style.display = 'inline-block';
+        btnMessages.style.display = 'inline-block';
+        logoutButton.style.display = 'inline-block';
+      } else {
+        userBar.style.display = 'none';
+      }
+    }
+
+    // Met à jour le badge de notifications de messages
+    function updateMessageBadge() {
+      const badge = document.getElementById('messageBadge');
+      if (!currentUser || !currentUser.messages) {
+        if (badge) badge.style.display = 'none';
+        return;
+      }
+      const unread = currentUser.messages.filter(m => !m.read).length;
+      if (unread > 0) {
+        badge.textContent = unread;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    // Applique les paramètres de design en cours (palette, slogan, image de bandeau)
+    function applyDesign() {
+      // Mettre à jour le slogan du bandeau.  Si aucun slogan n’est défini, on masque l’élément.
+      const taglineEl = document.querySelector('.hero-banner .tagline');
+      if (taglineEl) {
+        // On masque toujours le slogan sur l’image pour ne pas chevaucher le bandeau.  Le texte est conservé dans
+        // settings.design.tagline mais n’est pas affiché.
+        taglineEl.textContent = settings.design && settings.design.tagline ? settings.design.tagline : '';
+        taglineEl.style.display = 'none';
+      }
+      // Mettre à jour les couleurs d’accent si elles sont définies
+      if (settings.design) {
+        if (settings.design.accent) {
+          document.documentElement.style.setProperty('--accent', settings.design.accent);
+        }
+        if (settings.design.accentLight) {
+          document.documentElement.style.setProperty('--accent-light', settings.design.accentLight);
+        }
+      }
+      // Modifier l’image de fond et sa taille
+      const hero = document.querySelector('.hero-banner');
+      if (hero) {
+        if (settings.design && settings.design.heroImage) {
+          hero.style.backgroundImage = `url(${settings.design.heroImage})`;
+          if (settings.design.imageScale && settings.design.imageScale !== 1) {
+            const pct = settings.design.imageScale * 100;
+            hero.style.backgroundSize = pct + '% auto';
+          } else {
+            hero.style.backgroundSize = 'cover';
+          }
+          // Centrer horizontalement et appliquer le décalage vertical
+          const offset = (settings.design && typeof settings.design.offsetY === 'number') ? settings.design.offsetY : 0;
+          hero.style.backgroundPosition = '50% ' + offset + '%';
+        } else {
+          hero.style.backgroundImage = '';
+          hero.style.backgroundSize = '';
+        }
+        // Hauteur personnalisée du bandeau
+        if (settings.design && settings.design.height) {
+          hero.style.minHeight = settings.design.height + 'px';
+        } else {
+          hero.style.minHeight = '';
+        }
+      }
+      // Afficher ou masquer les éléments décoratifs
+      const cactusImg = document.querySelector('.hero-banner img.decor.cactus');
+      const pigImg = document.querySelector('.hero-banner img.decor.pig');
+      if (cactusImg) {
+        cactusImg.style.display = (settings.design && settings.design.showCactus) ? 'block' : 'none';
+      }
+      if (pigImg) {
+        pigImg.style.display = (settings.design && settings.design.showPig) ? 'block' : 'none';
+      }
+
+      // Mettre à jour le logo si un logo personnalisé est défini
+      const logoEl = document.querySelector('header img.logo');
+      if (logoEl) {
+        if (settings.logoImage) {
+          logoEl.src = settings.logoImage;
+        } else {
+          logoEl.src = 'logo-official.png';
+        }
+      }
+    }
+
+    // Initialise le formulaire de personnalisation du design à partir des paramètres enregistrés
+    function initDesignSettings() {
+      if (!settings.design) return;
+      const tagInput = document.getElementById('designTagline');
+      const accentInput = document.getElementById('designAccentColor');
+      const lightInput = document.getElementById('designAccentLightColor');
+      const heroPreview = document.getElementById('designHeroPreview');
+      // Initialiser les valeurs du formulaire
+      if (tagInput) tagInput.value = settings.design.tagline || '';
+      if (accentInput) {
+        accentInput.value = settings.design.accent || getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+      }
+      if (lightInput) {
+        lightInput.value = settings.design.accentLight || getComputedStyle(document.documentElement).getPropertyValue('--accent-light').trim();
+      }
+      // Si une image de bandeau est définie, l’afficher
+      if (heroPreview && settings.design.heroImage) {
+        heroPreview.src = settings.design.heroImage;
+        heroPreview.style.display = 'block';
+        // stocker la valeur dans la variable temporaire
+        designHeroImage = settings.design.heroImage;
+      } else if (heroPreview) {
+        heroPreview.src = '';
+        heroPreview.style.display = 'none';
+        designHeroImage = null;
+      }
+
+      // Préafficher le logo si un logo personnalisé est défini
+      const logoPreview = document.getElementById('designLogoPreview');
+      if (logoPreview) {
+        if (settings.logoImage) {
+          logoPreview.src = settings.logoImage;
+          logoPreview.style.display = 'block';
+        } else {
+          logoPreview.src = '';
+          logoPreview.style.display = 'none';
+        }
+      }
+
+      // Hauteur du bandeau
+      const heightInput = document.getElementById('designBannerHeight');
+      if (heightInput) {
+        heightInput.value = settings.design.height || 300;
+      }
+      // Échelle de l’image de fond
+      const scaleInput = document.getElementById('designImageScale');
+      if (scaleInput) {
+        scaleInput.value = settings.design.imageScale || 1;
+      }
+      // Cases à cocher pour le cactus et le cochon
+      const showCactusInput = document.getElementById('designShowCactus');
+      const showPigInput = document.getElementById('designShowPig');
+      if (showCactusInput) {
+        showCactusInput.checked = settings.design.showCactus !== false;
+      }
+      if (showPigInput) {
+        showPigInput.checked = settings.design.showPig !== false;
+      }
+
+      // Définir la valeur initiale du décalage vertical si le champ existe
+      const offsetInput = document.getElementById('designBannerOffset');
+      if (offsetInput) {
+        offsetInput.value = (settings.design && typeof settings.design.offsetY === 'number') ? settings.design.offsetY : 0;
+      }
+    }
+
+    // Lit l’image sélectionnée et met à jour l’aperçu
+    function handleHeroFile(event) {
+      const file = event.target.files && event.target.files[0];
+      const preview = document.getElementById('designHeroPreview');
+      if (!file || !preview) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        designHeroImage = e.target.result;
+        preview.src = designHeroImage;
+        preview.style.display = 'block';
+        // Mettre à jour la propriété heroImage pour appliquer immédiatement l’image choisie
+        if (!settings.design) settings.design = {};
+        settings.design.heroImage = designHeroImage;
+        applyDesign();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Lit le logo sélectionné et met à jour l’aperçu et les paramètres
+    function handleLogoFile(event) {
+      const file = event.target.files && event.target.files[0];
+      const preview = document.getElementById('designLogoPreview');
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const dataUri = e.target.result;
+        settings.logoImage = dataUri;
+        // Afficher l’aperçu du logo dans le panneau de design
+        if (preview) {
+          preview.src = dataUri;
+          preview.style.display = 'block';
+        }
+        // Appliquer immédiatement le logo au header
+        applyDesign();
+        saveSettings();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Enregistre le design depuis le formulaire et applique les changements
+    function saveDesignSettings() {
+      if (!currentUser || currentUser.role !== 'admin') return;
+      // Récupérer les champs
+      const tag = document.getElementById('designTagline').value.trim();
+      const acc = document.getElementById('designAccentColor').value;
+      const accLight = document.getElementById('designAccentLightColor').value;
+      // Mettre à jour les propriétés de design en utilisant la hauteur et la visibilité actuelles
+      const heightVal = parseInt(document.getElementById('designBannerHeight').value) || 300;
+      const showCact = document.getElementById('designShowCactus').checked;
+      const showPig = document.getElementById('designShowPig').checked;
+      const scaleVal = parseFloat(document.getElementById('designImageScale').value) || 1;
+      // Lire le décalage vertical (%)
+      const offsetVal = parseInt(document.getElementById('designBannerOffset')?.value) || 0;
+      settings.design = {
+        tagline: tag,
+        accent: acc,
+        accentLight: accLight,
+        heroImage: designHeroImage || settings.design.heroImage || '',
+        height: heightVal,
+        showCactus: showCact,
+        showPig: showPig,
+        imageScale: scaleVal,
+        offsetY: offsetVal
+      };
+      saveSettings();
+      applyDesign();
+      alert('Design enregistré.');
+    }
+
+    // Met à jour l’objet design en temps réel depuis les champs du formulaire et applique immédiatement le rendu
+    function updateDesignFromForm() {
+      if (!settings.design) settings.design = {};
+      settings.design.tagline = document.getElementById('designTagline').value.trim();
+      settings.design.accent = document.getElementById('designAccentColor').value;
+      settings.design.accentLight = document.getElementById('designAccentLightColor').value;
+      settings.design.height = parseInt(document.getElementById('designBannerHeight').value) || 300;
+      settings.design.showCactus = document.getElementById('designShowCactus').checked;
+      settings.design.showPig = document.getElementById('designShowPig').checked;
+      // Mettre à jour l’échelle de l’image horizontale
+      settings.design.imageScale = parseFloat(document.getElementById('designImageScale').value) || 1;
+      // Définir le décalage vertical (%).  S’il n’existe pas, conserver la valeur actuelle.
+      const offInput = document.getElementById('designBannerOffset');
+      if (offInput) {
+        settings.design.offsetY = parseInt(offInput.value) || 0;
+      }
+      // Ne modifie pas heroImage ici (il est mis à jour via handleHeroFile)
+      applyDesign();
+    }
+
+    // Affiche les informations du profil et le questionnaire pédagogique
+    function renderProfileSection() {
+      if (!currentUser) return;
+      document.getElementById('profileName').textContent = currentUser.name;
+      document.getElementById('profileEmail').textContent = currentUser.email;
+      document.getElementById('profileRole').textContent = currentUser.role;
+      const prof = currentUser.profile || {};
+      document.getElementById('profileSubject').value = prof.subject || '';
+      document.getElementById('profileClasses').value = prof.classes || '';
+      document.getElementById('profileSdgs').value = prof.sdgs || '';
+      // Afficher la liste des demandes PDF et initialiser l'input d'upload
+      renderDemands();
+      renderMyProjects();
+    }
+
+    // Enregistre le questionnaire pédagogique du profil
+    function saveProfileData() {
+      if (!currentUser) return;
+      currentUser.profile = {
+        subject: document.getElementById('profileSubject').value.trim(),
+        classes: document.getElementById('profileClasses').value.trim(),
+        sdgs: document.getElementById('profileSdgs').value.trim()
+      };
+      const idx = users.findIndex(u => u.email === currentUser.email);
+      if (idx >= 0) {
+        users[idx] = currentUser;
+        saveUsers();
+      }
+      alert('Profil enregistré.');
+    }
+
+    // Liste les fiches appartenant à l’utilisateur courant
+    function renderMyProjects() {
+      const container = document.getElementById('myProjects');
+      if (!container) return;
+      container.innerHTML = '';
+      if (!currentUser) return;
+      const mine = projects.filter(p => p.owner === currentUser.email);
+      if (!mine.length) {
+        container.append(el('p', 'Aucune fiche associée à votre compte.'));
+        return;
+      }
+
+    // Affiche la liste des demandes PDF pour l'utilisateur courant
+    function renderDemands() {
+      const listEl = document.getElementById('demandList');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      if (!currentUser) return;
+      const demands = currentUser.demands || [];
+      if (!demands.length) {
+        listEl.append(el('li', 'Aucune demande.'));
+        return;
+      }
+      demands.forEach((d, idx) => {
+        const li = el('li');
+        // lien de téléchargement pour le PDF
+        const a = el('a', d.name, { href: d.data, download: d.name, target: '_blank', rel: 'noopener noreferrer', style: 'color: var(--accent); text-decoration: underline;' });
+        li.append(a);
+        listEl.append(li);
+      });
+    }
+
+    // Gestion de l'upload de demande PDF : lit le fichier en base64 et l'ajoute au profil de l'utilisateur
+    function uploadDemand() {
+      const fileInput = document.getElementById('demandFile');
+      if (!fileInput || !fileInput.files || !fileInput.files.length) return;
+      const file = fileInput.files[0];
+      // Vérifier le type
+      if (!file || file.type !== 'application/pdf') {
+        alert('Merci de sélectionner un fichier PDF.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const dataUrl = e.target.result;
+        if (!currentUser.demands) currentUser.demands = [];
+        currentUser.demands.push({ name: file.name, data: dataUrl });
+        // Mettre à jour le tableau global des utilisateurs
+        const idx = users.findIndex(u => u.email === currentUser.email);
+        if (idx >= 0) {
+          users[idx] = currentUser;
+          saveUsers();
+          setCurrentUser(currentUser);
+        }
+        renderDemands();
+        alert('Document ajouté.');
+        fileInput.value = '';
+      };
+      reader.readAsDataURL(file);
+    }
+      mine.forEach(p => {
+        const div = el('div');
+        div.style.marginBottom = '0.5rem';
+        // Déterminer l’index global du projet pour la modification
+        const idx = projects.indexOf(p);
+        // Titre et matières
+        div.append(
+          el('strong', p.title || p.level || 'Sans titre'),
+          el('span', ' – ' + (p.skills && p.skills.length ? p.skills.join(', ') : '—'))
+        );
+        // Bouton de modification
+        const editBtn = el('button', 'Modifier', { style: 'margin-left:0.5rem; padding:0.2rem 0.5rem; font-size:0.8rem; border:1px solid var(--sand); border-radius:0.3rem; background:var(--accent-light); color:var(--dark); cursor:pointer;' });
+        editBtn.addEventListener('click', () => {
+          // Ouvrir l’onglet création et charger la fiche pour édition
+          if (typeof switchTab === 'function') switchTab('create');
+          loadProjectForEdit(idx);
+        });
+        div.append(editBtn);
+        container.append(div);
+      });
+    }
+
+    // Ouvre le dossier Google Drive dans un nouvel onglet
+    function openDriveFolder() {
+      window.open('https://drive.google.com/drive/u/0/folders/1ABed01uah-bGYdWoYWLrxlCDvVgvBNBa', '_blank');
+    }
+
+    // Envoie un message à un utilisateur identifié par son email
+    function sendMessage(toEmail, subject, content) {
+      const user = users.find(u => u.email === toEmail);
+      if (!user) return;
+      if (!user.messages) user.messages = [];
+      user.messages.push({ id: Date.now(), date: new Date().toISOString(), subject, content, read: false });
+      saveUsers();
+      // Mettre à jour le badge pour le destinataire s’il est connecté
+      if (currentUser && currentUser.email === user.email) {
+        updateMessageBadge();
+      }
+    }
+
+    // Affiche la liste des messages et marque ceux-ci comme lus
+    function renderMessages() {
+      const container = document.getElementById('messagesList');
+      if (!container || !currentUser) return;
+      container.innerHTML = '';
+      const msgs = currentUser.messages || [];
+      if (!msgs.length) {
+        container.append(el('p', 'Aucun message pour le moment.'));
+        updateMessageBadge();
+        return;
+      }
+      msgs.sort((a, b) => new Date(b.date) - new Date(a.date));
+      msgs.forEach(msg => {
+        const wrap = el('div', '', { class: 'card' });
+        const head = el('div');
+        head.append(el('strong', msg.subject || ''), el('span', '  '), el('small', new Date(msg.date).toLocaleString(), { style: 'color:#666;' }));
+        const body = el('p', msg.content || '');
+        wrap.append(head, body);
+        container.append(wrap);
+        msg.read = true;
+      });
+      // sauvegarder l’état de lecture
+      const idx = users.findIndex(u => u.email === currentUser.email);
+      if (idx >= 0) {
+        users[idx].messages = msgs;
+        saveUsers();
+      }
+      updateMessageBadge();
+    }
+
+    // ---------- RECHERCHE & RENCONTRE ----------
+    /**
+     * Applique les filtres de recherche et affiche la liste résultante.
+     * Les filtres correspondent aux champs du formulaire dans l’onglet Recherche.
+     */
+    function applySearchFilters() {
+      const lvl = (document.getElementById('searchLevel')?.value || '').trim().toLowerCase();
+      const sk = (document.getElementById('searchSkills')?.value || '').trim().toLowerCase();
+      const per = (document.getElementById('searchPeriod')?.value || '').trim().toLowerCase();
+      const mod = (document.getElementById('searchModalities')?.value || '').trim().toLowerCase();
+      const tg = (document.getElementById('searchTags')?.value || '').trim().toLowerCase();
+      const sum = (document.getElementById('searchSummary')?.value || '').trim().toLowerCase();
+      // récupérer les valeurs de pédagogie sélectionnées
+      const pedagElems = document.querySelectorAll('input[name="searchPedagogy"]:checked');
+      const pedagValues = Array.from(pedagElems).map(el => el.value.toLowerCase());
+      const list = projects.filter(p => {
+        if (!p) return false;
+        if (lvl && !(p.level || '').toLowerCase().includes(lvl)) return false;
+        if (sk) {
+          const skillsFilter = sk.split(/[,;]+/).map(s => s.trim()).filter(Boolean);
+          const pSkills = (p.skills || []).map(s => s.toLowerCase());
+          if (!skillsFilter.every(sf => pSkills.some(ps => ps.includes(sf)))) return false;
+        }
+        if (per && !(p.period || '').toLowerCase().includes(per)) return false;
+        if (pedagValues.length) {
+          const pPeda = (p.pedagogy || []).map(v => v.toLowerCase());
+          if (!pedagValues.every(val => pPeda.includes(val))) return false;
+        }
+        if (mod && !(p.modalities || '').toLowerCase().includes(mod)) return false;
+        if (tg) {
+          const tagsFilter = tg.split(/[,;]+/).map(s => s.trim()).filter(Boolean);
+          const pTags = (p.tags || []).map(t => t.toLowerCase());
+          if (!tagsFilter.every(tf => pTags.some(pt => pt.includes(tf)))) return false;
+        }
+        if (sum && !(p.summary || '').toLowerCase().includes(sum)) return false;
+        return true;
+      });
+      renderSearchResultsForList(list);
+    }
+
+    /**
+     * Affiche une liste de projets (fiches) dans le conteneur de recherche.
+     * @param {Array} list Tableau de projets à afficher
+     */
+    function renderSearchResultsForList(list) {
+      const container = document.getElementById('searchResults');
+      if (!container) return;
+      container.innerHTML = '';
+      if (!list || !list.length) {
+        container.append(el('p', 'Aucun résultat trouvé.'));
+        return;
+      }
+      list.forEach(p => {
+        const card = el('div', '', { class: 'project-card' });
+        card.append(
+          el('h3', p.title || p.level || 'Sans titre'),
+          el('p', 'Matières : ' + ((p.skills || []).join(', ') || '—'), { style: 'margin:0 0 0.25rem 0; font-size:0.85rem; color:#555;' }),
+          el('small', 'Période : ' + ((p.period) || '—')),
+          el('br', ''),
+          (p.pedagogy && p.pedagogy.length ? el('small', 'Pédagogie : ' + p.pedagogy.join(', ')) : el('small', '')),
+          el('br', ''),
+          el('small', 'Mots‑clés : ' + ((p.tags || []).join(', ') || '—')),
+          el('br', ''),
+          el('p', p.summary || '')
+        );
+        container.append(card);
+      });
+    }
+
+    /**
+     * Construit et affiche une mini‑rencontre (simili Tinder) dans la section Recherche.
+     * Pour chaque fiche non possédée par l’utilisateur, propose une carte avec les
+     * informations principales et deux boutons « Passer » / « Intéressé ». Un like
+     * envoie un message à l’auteur de la fiche et passe à la carte suivante.
+     */
+    function renderMeetSearch() {
+      const container = document.getElementById('meetContainer');
+      if (!container || !currentUser) return;
+      container.innerHTML = '';
+      const deck = projects.map((p, idx) => ({ p, idx })).filter(obj => obj.p && obj.p.owner && obj.p.owner !== currentUser.email);
+      if (!deck.length) {
+        container.append(el('p', 'Aucun projet disponible pour rencontre.'));
+        return;
+      }
+      let pos = 0;
+      function showCard() {
+        if (pos >= deck.length) {
+          container.innerHTML = '';
+          container.append(el('p', 'Plus de fiches à parcourir.'));
+          return;
+        }
+        const obj = deck[pos];
+        const prj = obj.p;
+        container.innerHTML = '';
+        const card = el('div', '', { class: 'card meet' });
+        card.append(
+          el('h3', prj.level || 'Sans titre'),
+          el('p', prj.summary || 'Pas de résumé disponible.')
+        );
+        const owner = users.find(u => u.email === prj.owner);
+        if (owner) {
+          card.append(el('small', 'Proposé par ' + owner.name));
+        }
+        const controls = el('div', '', { style: 'margin-top:1rem; display:flex; gap:1rem;' });
+        // Bouton « Passer » : enregistre le refus dans le store de rencontre et passe à la carte suivante
+        const passBtn = el('button', 'Passer', { class: 'btn btn-pass' });
+        passBtn.addEventListener('click', () => {
+          // Stocker le pass uniquement si un propriétaire est défini
+          if (owner) {
+            passUser(currentUser.email, owner.email);
+          }
+          pos++;
+          showCard();
+        });
+        // Bouton « Intéressé » : enregistre le like, envoie un message et détecte un match réciproque
+        const likeBtn = el('button', 'Intéressé', { class: 'btn btn-like' });
+        likeBtn.addEventListener('click', () => {
+          if (!owner) {
+            pos++;
+            showCard();
+            return;
+          }
+          // Enregistrer le like dans le store de rencontre
+          likeUser(currentUser.email, owner.email);
+          // Envoyer un message indiquant l'intérêt
+          const subj = 'Un enseignant est intéressé par votre fiche';
+          const msg = currentUser.name + ' a aimé votre fiche « ' + (prj.level || 'Sans titre') + ' ».';
+          sendMessage(owner.email, subj, msg);
+          // Vérifier si un match réciproque existe déjà
+          if (checkMatch(currentUser.email, owner.email)) {
+            // enregistrer le match et avertir les deux utilisateurs
+            recordMatch(currentUser.email, owner.email);
+            sendMatchMessage(currentUser.email, owner.email);
+            // déclencher une collaboration automatique si l’option est activée et que les contraintes de tokens sont respectées
+            if (settings.autoCollab && settings.apiKey && settings.used < (settings.budget * 0.8)) {
+              const aProj = projects.filter(p => p.owner === currentUser.email).slice(-1)[0];
+              const bProj = projects.filter(p => p.owner === owner.email).slice(-1)[0];
+              if (aProj && bProj) {
+                generateScenarioSilent(aProj, bProj);
+              }
+            }
+          }
+          pos++;
+          showCard();
+        });
+        controls.append(passBtn, likeBtn);
+        container.append(card, controls);
+      }
+      showCard();
+    }
+
+    /**
+     * Charge le stockage des likes/passes/matches depuis localStorage.  Si aucune donnée
+     * n’existe, initialise un conteneur vide.  Les données sont stockées sous
+     * la clé LIKES_KEY et contiennent trois tableaux : likes, passes et matches.
+     */
+    function loadMeet() {
+      try {
+        const raw = localStorage.getItem(LIKES_KEY);
+        if (raw) {
+          meetStore = JSON.parse(raw);
+        }
+      } catch (err) {
+        console.warn('Impossible de charger le store de rencontre :', err);
+        meetStore = { likes: [], passes: [], matches: [] };
+      }
+    }
+
+    /**
+     * Sauvegarde l’état du store de rencontre dans localStorage sous la clé LIKES_KEY.
+     */
+    function saveMeet() {
+      try {
+        localStorage.setItem(LIKES_KEY, JSON.stringify(meetStore));
+      } catch (err) {
+        console.warn('Impossible de sauvegarder le store de rencontre :', err);
+      }
+    }
+
+    /**
+     * Enregistre un « like » de l’utilisateur byEmail envers l’utilisateur toEmail.
+     * Si le like existe déjà, l’opération est ignorée.  Enregistre la date et
+     * l’index éventuel de la fiche (non utilisé pour l’instant).
+     * @param {string} byEmail L’email de l’utilisateur qui like
+     * @param {string} toEmail L’email de l’utilisateur liké
+     */
+    function likeUser(byEmail, toEmail) {
+      if (!byEmail || !toEmail || byEmail === toEmail) return;
+      if (!meetStore.likes.some(e => e.by === byEmail && e.to === toEmail)) {
+        meetStore.likes.push({ by: byEmail, to: toEmail, date: new Date().toISOString() });
+        saveMeet();
+      }
+    }
+
+    /**
+     * Enregistre un « pass » (refus) de l’utilisateur byEmail envers l’utilisateur toEmail.
+     * Si l’entrée existe déjà, l’opération est ignorée.
+     * @param {string} byEmail Email du refuseur
+     * @param {string} toEmail Email de la personne passée
+     */
+    function passUser(byEmail, toEmail) {
+      if (!byEmail || !toEmail || byEmail === toEmail) return;
+      if (!meetStore.passes.some(e => e.by === byEmail && e.to === toEmail)) {
+        meetStore.passes.push({ by: byEmail, to: toEmail, date: new Date().toISOString() });
+        saveMeet();
+      }
+    }
+
+    /**
+     * Vérifie si un match réciproque existe entre deux emails.  Un match est
+     * détecté si les deux utilisateurs se sont likés mutuellement.
+     * @param {string} aEmail Email du premier utilisateur
+     * @param {string} bEmail Email du second utilisateur
+     * @returns {boolean} True si un match existe déjà
+     */
+    function checkMatch(aEmail, bEmail) {
+      if (!aEmail || !bEmail) return false;
+      return meetStore.likes.some(e => e.by === aEmail && e.to === bEmail) &&
+             meetStore.likes.some(e => e.by === bEmail && e.to === aEmail);
+    }
+
+    /**
+     * Enregistre un match réciproque entre deux utilisateurs si celui‑ci n’existe pas déjà.
+     * @param {string} aEmail Email du premier utilisateur
+     * @param {string} bEmail Email du second utilisateur
+     */
+    function recordMatch(aEmail, bEmail) {
+      if (!aEmail || !bEmail) return;
+      // vérifier qu’un match n’existe pas déjà (ordre indifférent)
+      const exists = meetStore.matches.some(m => (m.a === aEmail && m.b === bEmail) || (m.a === bEmail && m.b === aEmail));
+      if (!exists) {
+        meetStore.matches.push({ a: aEmail, b: bEmail, date: new Date().toISOString() });
+        saveMeet();
+      }
+    }
+
+    /**
+     * Envoie un message interne aux deux utilisateurs lors d’un match.  Le contenu
+     * mentionne les noms et suggère de collaborer.  Optionnellement, on peut
+     * enrichir ce message avec les projets récents des utilisateurs.
+     * @param {string} aEmail Email du premier utilisateur
+     * @param {string} bEmail Email du second utilisateur
+     */
+    function sendMatchMessage(aEmail, bEmail) {
+      const ua = users.find(u => u.email === aEmail);
+      const ub = users.find(u => u.email === bEmail);
+      if (!ua || !ub) return;
+      const subj = 'Vous avez un nouveau match pédagogique !';
+      let content = 'Bonjour ' + ua.name + ' et ' + ub.name + ' !\n';
+      content += 'Vous vous êtes aimés mutuellement, félicitations.\n';
+      // récupérer la dernière fiche de chacun pour le contexte
+      const aProj = projects.filter(p => p.owner === aEmail).slice(-1)[0];
+      const bProj = projects.filter(p => p.owner === bEmail).slice(-1)[0];
+      if (aProj && bProj) {
+        content += 'Vos projets "' + (aProj.level || 'Projet A') + '" et "' + (bProj.level || 'Projet B') + '" semblent compatibles.\n';
+      }
+      content += 'Contactez‑vous via la messagerie interne pour organiser une collaboration.\n';
+      sendMessage(aEmail, subj, content);
+      sendMessage(bEmail, subj, content);
+    }
+
+    // --- MEET : moteur de rencontre avancé (swipe) ---
+
+    /**
+     * Construit une liste d’indices de projets à proposer à l’utilisateur forEmail.
+     * Filtre les projets créés par l’utilisateur lui‑même et ceux déjà passés.
+     * Randomise l’ordre pour proposer une expérience variée.
+     * @param {string} forEmail Email de l’utilisateur courant
+     * @returns {number[]} Tableau d’indices dans projects
+     */
+    function buildMeetDeck(forEmail) {
+      const deck = [];
+      projects.forEach((p, idx) => {
+        if (!p || !p.owner || p.owner === forEmail) return;
+        // Sauter si l’utilisateur a déjà passé cette personne
+        const passed = meetStore.passes.some(e => e.by === forEmail && e.to === p.owner);
+        if (passed) return;
+        deck.push(idx);
+      });
+      // Mélanger l’ordre des fiches (algorithme de Fisher-Yates)
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+      return deck;
+    }
+
+    /**
+     * Construit l’interface de l’onglet « Rencontre » : une zone carte + boutons et
+     * initialise le deck de fiches à parcourir.  La vue est rafraîchie quand
+     * l’utilisateur clique sur « Rafraîchir ».  Si aucun utilisateur n’est connecté
+     * ou aucun projet n’est disponible, un message est affiché.
+     */
+    function renderMeetView() {
+      const meetSection = document.getElementById('meetView');
+      if (!meetSection) return;
+      meetSection.innerHTML = '';
+      if (!currentUser) {
+        meetSection.append(el('p', 'Connecte-toi pour accéder à la rencontre.'));
+        return;
+      }
+      // Construire le deck et réinitialiser la position
+      meetDeck = buildMeetDeck(currentUser.email);
+      meetPos = 0;
+      if (!meetDeck.length) {
+        meetSection.append(el('p', 'Aucune fiche disponible pour la rencontre.'));
+        const refreshBtn = el('button', 'Rafraîchir', { class: 'btn' });
+        refreshBtn.addEventListener('click', () => {
+          meetDeck = buildMeetDeck(currentUser.email);
+          meetPos = 0;
+          renderMeetView();
+        });
+        meetSection.append(refreshBtn);
+        return;
+      }
+      // Créer un conteneur pour la carte et les contrôles
+      const container = el('div', '', { id: 'meetCardContainer', style: 'max-width:400px;margin:0 auto;' });
+      meetSection.append(container);
+      // Afficher la première carte
+      renderMeetCard(meetDeck[meetPos]);
+    }
+
+    /**
+     * Affiche la carte correspondant à l’indice projectIndex du deck.  Gère la fin
+     * du deck en affichant un message et un bouton de rafraîchissement.  Ajoute
+     * des événements de glissement (pointerdown/move/up) pour permettre le swipe.
+     * @param {number} projectIndex Index du projet à afficher
+     */
+    function renderMeetCard(projectIndex) {
+      const container = document.getElementById('meetCardContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      // Fin du deck : plus de cartes
+      if (meetPos >= meetDeck.length || projectIndex === undefined) {
+        container.append(el('p', 'Plus de fiches à parcourir.'));
+        const refreshBtn = el('button', 'Rafraîchir', { class: 'btn' });
+        refreshBtn.addEventListener('click', () => {
+          meetDeck = buildMeetDeck(currentUser.email);
+          meetPos = 0;
+          renderMeetCard(meetDeck[meetPos]);
+        });
+        container.append(refreshBtn);
+        return;
+      }
+      const idx = projectIndex;
+      const prj = projects[idx];
+      if (!prj) return;
+      // Carte de la fiche
+      const card = el('div', '', { class: 'card meet', style: 'position:relative;' });
+      card.append(
+        el('h3', prj.level || 'Sans titre'),
+        el('small', 'Compétences : ' + ((prj.skills && prj.skills.length) ? prj.skills.join(', ') : '—')),
+        el('br'),
+        el('small', 'Période : ' + (prj.period || '—')),
+        el('br'),
+        (prj.pedagogy && prj.pedagogy.length ? el('small', 'Type de pédagogie : ' + prj.pedagogy.join(', ')) : el('small', '')),
+        el('br'),
+        el('small', 'Tags : ' + ((prj.tags && prj.tags.length) ? prj.tags.join(', ') : '—')),
+        el('br'),
+        el('p', prj.summary || '')
+      );
+      // Informations sur l’auteur
+      const owner = users.find(u => u.email === prj.owner);
+      if (owner) {
+        const info = el('small', 'Proposé par ' + owner.name + (owner.profile && owner.profile.subject ? ' – ' + owner.profile.subject : ''));
+        card.append(info);
+      }
+      // Contrôles Passer / Intéressé
+      const controls = el('div', '', { style: 'margin-top:1rem; display:flex; gap:1rem; justify-content:center;' });
+      const passBtn = el('button', 'Passer', { class: 'btn btn-pass' });
+      const likeBtn = el('button', 'Intéressé', { class: 'btn btn-like' });
+      passBtn.addEventListener('click', () => handleSwipe('left'));
+      likeBtn.addEventListener('click', () => handleSwipe('right'));
+      controls.append(passBtn, likeBtn);
+      container.append(card, controls);
+      // Gestion des gestes (swipe).  On utilise pointerdown / move / up pour suivre
+      // le déplacement horizontal et déterminer un swipe gauche ou droite.
+      let startX = 0;
+      let isDown = false;
+      card.addEventListener('pointerdown', (e) => {
+        isDown = true;
+        startX = e.clientX;
+      });
+      card.addEventListener('pointermove', (e) => {
+        if (!isDown) return;
+        const dx = e.clientX - startX;
+        card.style.transform = `translateX(${dx}px)`;
+        card.style.opacity = `${1 - Math.min(Math.abs(dx) / 200, 0.8)}`;
+      });
+      card.addEventListener('pointerup', (e) => {
+        if (!isDown) return;
+        isDown = false;
+        const dx = e.clientX - startX;
+        card.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+        if (Math.abs(dx) > 100) {
+          const dir = dx > 0 ? 'right' : 'left';
+          handleSwipe(dir);
+        } else {
+          // retour à la position initiale
+          card.style.transform = '';
+          card.style.opacity = '';
+        }
+        setTimeout(() => {
+          card.style.transition = '';
+        }, 200);
+      });
+    }
+
+    /**
+     * Gère la logique après un swipe ou un clic sur Passer/Intéressé.  Un swipe à
+     * gauche équivaut à un pass (passUser), un swipe à droite à un like.
+     * Si un like provoque un match réciproque, le match est enregistré et un
+     * message commun est envoyé.  L’auto‑collaboration est déclenchée si
+     * activée.  Passe ensuite à la carte suivante.
+     * @param {'left'|'right'} direction Direction du swipe
+     */
+    function handleSwipe(direction) {
+      // Vérifier qu’il reste des éléments dans le deck
+      if (meetPos >= meetDeck.length) {
+        renderMeetCard();
+        return;
+      }
+      const idx = meetDeck[meetPos];
+      const prj = projects[idx];
+      const owner = prj && prj.owner ? users.find(u => u.email === prj.owner) : null;
+      if (direction === 'left') {
+        if (owner) passUser(currentUser.email, owner.email);
+      } else if (direction === 'right') {
+        if (owner) {
+          likeUser(currentUser.email, owner.email);
+          // envoyer un message d’intérêt
+          const subj = 'Un enseignant est intéressé par votre fiche';
+          const msg = currentUser.name + ' a aimé votre fiche « ' + (prj.level || 'Sans titre') + ' ».';
+          sendMessage(owner.email, subj, msg);
+          // Vérifier un match réciproque
+          if (checkMatch(currentUser.email, owner.email)) {
+            recordMatch(currentUser.email, owner.email);
+            sendMatchMessage(currentUser.email, owner.email);
+            // auto-collab si activée et quota non dépassé
+            if (settings.autoCollab && settings.apiKey && settings.used < (settings.budget * 0.8)) {
+              const aProj = projects.filter(p => p.owner === currentUser.email).slice(-1)[0];
+              const bProj = projects.filter(p => p.owner === owner.email).slice(-1)[0];
+              if (aProj && bProj) {
+                generateScenarioSilent(aProj, bProj);
+              }
+            }
+          }
+        }
+      }
+      // passer à la carte suivante
+      meetPos++;
+      renderMeetCard(meetDeck[meetPos]);
+    }
+
+    // Envoie un email de confirmation d’inscription via EmailJS
+    function sendConfirmationEmail(user) {
+      if (!settings.emailServiceId || !settings.emailTemplateId || !settings.emailUserId) {
+        // Si EmailJS n’est pas configuré, afficher directement le lien de confirmation à l’utilisateur
+        const baseUrl = window.location.href.split('?')[0];
+        const confirmLink = baseUrl + '?confirm=' + encodeURIComponent(user.confirmationToken);
+        alert('EmailJS n’est pas configuré. Copie/colle ce lien dans ton navigateur pour confirmer ton compte :\n' + confirmLink);
+        return;
+      }
+      if (typeof emailjs === 'undefined' || !emailjs) {
+        console.warn('Bibliothèque EmailJS non chargée.');
+        return;
+      }
+      // Initialiser EmailJS avec l’User ID défini dans les paramètres
+      emailjs.init(settings.emailUserId);
+      // Construire le lien de confirmation : on utilise l’URL actuelle sans query, puis on ajoute ?confirm=TOKEN
+      const baseUrl = window.location.href.split('?')[0];
+      const confirmLink = baseUrl + '?confirm=' + encodeURIComponent(user.confirmationToken);
+      const templateParams = {
+        to_email: user.email,
+        to_name: user.name,
+        confirmation_link: confirmLink
+      };
+      return emailjs.send(settings.emailServiceId, settings.emailTemplateId, templateParams);
+    }
+
+    // Affiche la liste des utilisateurs avec des actions pour changer les rôles
+    function renderUserManagement() {
+      const container = document.getElementById('userManagement');
+      if (!container) return;
+      container.innerHTML = '';
+      if (!currentUser || currentUser.role !== 'admin') {
+        container.innerHTML = '<p>Accès réservé aux administrateurs.</p>';
+        return;
+      }
+      users.forEach(u => {
+        const rowDiv = el('div');
+        rowDiv.style.display = 'flex';
+        rowDiv.style.alignItems = 'center';
+        rowDiv.style.justifyContent = 'space-between';
+        rowDiv.style.marginBottom = '0.5rem';
+        // Colonne d’informations (nom, email, rôle, dates)
+        const infoSpan = el('span');
+        const nameStrong = el('strong', u.name);
+        infoSpan.append(nameStrong, el('span', ' (' + u.email + ') – '), el('em', u.role));
+        infoSpan.append(el('br'));
+        const sm = el('small');
+        sm.append(
+          el('span', 'Inscrit le : ' + (u.registeredAt ? new Date(u.registeredAt).toLocaleString() : 'N/A')),
+          el('br'),
+          el('span', 'Dernière connexion : ' + (u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'N/A'))
+        );
+        infoSpan.append(sm);
+        rowDiv.append(infoSpan);
+        // Actions (changer de rôle, consulter) si ce n’est pas l’utilisateur courant
+        if (u.email !== (currentUser && currentUser.email)) {
+          const actions = el('div');
+          const roleBtn = el('button', u.role === 'admin' ? 'Retirer admin' : 'Promouvoir admin', { class: 'btn' });
+          roleBtn.style.fontSize = '0.8rem';
+          roleBtn.addEventListener('click', () => {
+            u.role = (u.role === 'admin') ? 'teacher' : 'admin';
+            saveUsers();
+            renderUserManagement();
+            updateUIForRole();
+            alert('Rôle mis à jour pour ' + u.name + '.');
+          });
+          const consultBtn = el('button', 'Consulter', { class: 'btn' });
+          consultBtn.style.fontSize = '0.8rem';
+          consultBtn.style.marginLeft = '0.5rem';
+          consultBtn.addEventListener('click', () => {
+            showUserInfo(u);
+          });
+          actions.append(roleBtn, consultBtn);
+          rowDiv.append(actions);
+        }
+        container.append(rowDiv);
+      });
+    }
+
+    // Affiche un modal avec les informations détaillées d’un utilisateur sélectionné (admin)
+    function showUserInfo(user) {
+      const modal = document.getElementById('userInfoModal');
+      const content = document.getElementById('userInfoContent');
+      if (!modal || !content || !user) return;
+      content.innerHTML = '';
+      content.append(
+        el('h3', user.name),
+        row('Email :', user.email),
+        row('Rôle :', user.role),
+        row('Inscrit le :', user.registeredAt ? new Date(user.registeredAt).toLocaleString() : 'N/A'),
+        row('Dernière connexion :', user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'N/A'),
+        el('h4', 'Questionnaire pédagogique'),
+        row('Matière :', user.profile?.subject || '-'),
+        row('Classes/niveaux :', user.profile?.classes || '-'),
+        row('ODD :', user.profile?.sdgs || '-'),
+        el('h4', 'Fiches créées')
+      );
+      const ul = el('ul');
+      const userProjects = projects.filter(p => p.owner === user.email);
+      if (userProjects.length) {
+        userProjects.forEach(p => {
+          ul.append(el('li', (p.title || p.level || 'Sans titre') + ' – ' + (p.skills && p.skills.length ? p.skills.join(', ') : '')));
+        });
+      } else {
+        ul.append(el('li', 'Aucune fiche créée.'));
+      }
+      content.append(ul);
+      // Afficher la liste des demandes PDF
+      content.append(el('h4', 'Demandes PDF'));
+      const demandList = el('ul');
+      const demands = user.demands || [];
+      if (demands.length) {
+        demands.forEach(d => {
+          const li = el('li');
+          const link = el('a', d.name, { href: d.data, download: d.name, target: '_blank', rel: 'noopener noreferrer', style: 'color: var(--accent); text-decoration: underline;' });
+          li.append(link);
+          demandList.append(li);
+        });
+      } else {
+        demandList.append(el('li', 'Aucune demande.'));
+      }
+      content.append(demandList);
+      modal.style.display = 'flex';
+    }
+
+    // Cache le modal de consultation d’utilisateur
+    function hideUserInfo() {
+      const modal = document.getElementById('userInfoModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    /**
+     * Permet de changer d’onglet depuis les attributs onclick définis dans la barre de navigation.
+     * Cette fonction met à jour l’état actif des boutons de navigation, affiche la section
+     * correspondante et déclenche les opérations spécifiques à certains onglets (profil,
+     * messagerie ou administration).  Elle est utilisée pour corriger le problème des
+     * onglets qui ne répondaient plus lorsque l’on utilisait des attributs onclick sans
+     * définir cette fonction.
+     * @param {string} tab – identifiant de l’onglet (correspondant à l’attribut data‑tab et à l’ID de la section)
+     */
+    function switchTab(tab) {
+      // Mettre à jour la classe active sur les boutons
+      const navButtons = document.querySelectorAll('nav button');
+      navButtons.forEach(btn => {
+        const isActive = btn.dataset.tab === tab;
+        if (isActive) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      // Afficher uniquement la section correspondante
+      document.querySelectorAll('main section').forEach(sec => {
+        if (sec.id === tab) {
+          sec.classList.add('active');
+        } else {
+          sec.classList.remove('active');
+        }
+      });
+      // Exécuter des actions supplémentaires selon l’onglet
+      if (tab === 'profile') {
+        renderProfileSection();
+      } else if (tab === 'messages') {
+        renderMessages();
+      } else if (tab === 'settings') {
+        initSettings();
+        renderUserManagement();
+      } else if (tab === 'search') {
+        // initialiser la recherche avec les fiches existantes
+        renderSearchResults('');
+      }
+    }
+
+    // Tabs navigation
+    function initTabs() {
+      const tabs = document.querySelectorAll('nav button');
+      tabs.forEach(btn => {
+        // définir les rôles ARIA si non déjà définis
+        btn.setAttribute('role', 'tab');
+        btn.setAttribute('aria-selected', btn.classList.contains('active') ? 'true' : 'false');
+        btn.addEventListener('click', () => {
+          tabs.forEach(b => {
+            b.classList.remove('active');
+            b.setAttribute('aria-selected', 'false');
+          });
+          btn.classList.add('active');
+          btn.setAttribute('aria-selected', 'true');
+          const target = btn.dataset.tab;
+          document.querySelectorAll('main section').forEach(sec => {
+            sec.classList.toggle('active', sec.id === target);
+          });
+          // Fonctions spécifiques lors du changement d’onglet
+          if (target === 'profile') {
+            renderProfileSection();
+          } else if (target === 'messages') {
+            renderMessages();
+          } else if (target === 'settings') {
+            initSettings();
+            renderUserManagement();
+          } else if (target === 'search') {
+            // À l’ouverture de l’onglet Recherche : filtrer et charger le mini‑jeu de rencontre de recherche
+            applySearchFilters();
+            renderMeetSearch();
+          } else if (target === 'meet') {
+            // Onglet rencontre dédié : afficher le deck principal
+            renderMeetView();
+          }
+        });
+      });
+    }
+
+    // Settings actions
+    function initSettings() {
+      const apiInput = document.getElementById('apiKey');
+      apiInput.value = settings.apiKey || '';
+      document.getElementById('budget').value = settings.budget;
+      document.getElementById('model').value = settings.model;
+      document.getElementById('temperature').value = settings.temperature;
+      document.getElementById('maxTokens').value = settings.maxTokens;
+      // Charger les paramètres EmailJS
+      const emailServiceIdInput = document.getElementById('emailServiceId');
+      const emailTemplateIdInput = document.getElementById('emailTemplateId');
+      const emailUserIdInput = document.getElementById('emailUserId');
+      const emailResetTemplateIdInput = document.getElementById('emailResetTemplateId');
+      if (emailServiceIdInput) emailServiceIdInput.value = settings.emailServiceId || '';
+      if (emailTemplateIdInput) emailTemplateIdInput.value = settings.emailTemplateId || '';
+      if (emailUserIdInput) emailUserIdInput.value = settings.emailUserId || '';
+      if (emailResetTemplateIdInput) emailResetTemplateIdInput.value = settings.emailResetTemplateId || '';
+      updateTokenUsage();
+      // Désactiver ou activer les champs selon le rôle de l’utilisateur
+      const isAdmin = currentUser && currentUser.role === 'admin';
+      const saveApiBtn = document.getElementById('saveApiKey');
+      const saveModelBtn = document.getElementById('saveModel');
+      const saveEmailBtn = document.getElementById('saveEmailSettings');
+      if (!isAdmin) {
+        apiInput.disabled = true;
+        saveApiBtn.style.display = 'none';
+        document.getElementById('budget').disabled = true;
+        document.getElementById('model').disabled = true;
+        document.getElementById('temperature').disabled = true;
+        document.getElementById('maxTokens').disabled = true;
+        saveModelBtn.style.display = 'none';
+        // Champs EmailJS
+        if (emailServiceIdInput) emailServiceIdInput.disabled = true;
+        if (emailTemplateIdInput) emailTemplateIdInput.disabled = true;
+        if (emailUserIdInput) emailUserIdInput.disabled = true;
+        if (emailResetTemplateIdInput) emailResetTemplateIdInput.disabled = true;
+        if (saveEmailBtn) saveEmailBtn.style.display = 'none';
+        // La personnalisation du design n’est pas accessible aux enseignants
+        const designCard = document.getElementById('designCard');
+        if (designCard) designCard.style.display = 'none';
+      } else {
+        apiInput.disabled = false;
+        saveApiBtn.style.display = 'inline-block';
+        document.getElementById('budget').disabled = false;
+        document.getElementById('model').disabled = false;
+        document.getElementById('temperature').disabled = false;
+        document.getElementById('maxTokens').disabled = false;
+        saveModelBtn.style.display = 'inline-block';
+        // Champs EmailJS
+        if (emailServiceIdInput) emailServiceIdInput.disabled = false;
+        if (emailTemplateIdInput) emailTemplateIdInput.disabled = false;
+        if (emailUserIdInput) emailUserIdInput.disabled = false;
+        if (emailResetTemplateIdInput) emailResetTemplateIdInput.disabled = false;
+        if (saveEmailBtn) saveEmailBtn.style.display = 'inline-block';
+        // Afficher le module de design et initialiser les champs
+        const designCard = document.getElementById('designCard');
+        if (designCard) designCard.style.display = 'block';
+        initDesignSettings();
+      // Actualiser la case d’auto-collaboration (IA)
+      const autoCb = document.getElementById('designAutoCollab');
+      if (autoCb) autoCb.checked = !!settings.autoCollab;
+      if (autoCb) autoCb.addEventListener('change', () => {
+        settings.autoCollab = !!autoCb.checked;
+        saveSettings();
+      });
+      // Actualiser la case d’activation de l’onglet Rencontre
+      const meetCb = document.getElementById('designEnableMeet');
+      if (meetCb) meetCb.checked = !!settings.enableMeet;
+      if (meetCb) meetCb.addEventListener('change', () => {
+        settings.enableMeet = !!meetCb.checked;
+        saveSettings();
+        updateUIForRole();
+      });
+      }
+      // Détacher d’anciens écouteurs pour éviter la multiplication des handlers
+      saveApiBtn.replaceWith(saveApiBtn.cloneNode(true));
+      saveModelBtn.replaceWith(saveModelBtn.cloneNode(true));
+      if (saveEmailBtn) saveEmailBtn.replaceWith(saveEmailBtn.cloneNode(true));
+      // Nettoyer les gestionnaires du module de design afin d’éviter des doublons
+      const designSaveBtn = document.getElementById('saveDesign');
+      if (designSaveBtn) designSaveBtn.replaceWith(designSaveBtn.cloneNode(true));
+      const designFileInput = document.getElementById('designHeroFile');
+      if (designFileInput) designFileInput.replaceWith(designFileInput.cloneNode(true));
+      const newSaveApiBtn = document.getElementById('saveApiKey');
+      const newSaveModelBtn = document.getElementById('saveModel');
+      const newSaveEmailBtn = document.getElementById('saveEmailSettings');
+      const newSaveDesignBtn = document.getElementById('saveDesign');
+      const newDesignFileInput = document.getElementById('designHeroFile');
+      // Cloner l’input du logo pour supprimer d’anciens gestionnaires
+      const logoFileInput = document.getElementById('designLogoFile');
+      if (logoFileInput) logoFileInput.replaceWith(logoFileInput.cloneNode(true));
+      const newLogoInput = document.getElementById('designLogoFile');
+      newSaveApiBtn.addEventListener('click', () => {
+        settings.apiKey = document.getElementById('apiKey').value.trim();
+        saveSettings();
+        alert('Clé API enregistrée.');
+      });
+      newSaveModelBtn.addEventListener('click', () => {
+        settings.budget = parseInt(document.getElementById('budget').value) || 10000;
+        settings.model = document.getElementById('model').value;
+        settings.temperature = parseFloat(document.getElementById('temperature').value);
+        settings.maxTokens = parseInt(document.getElementById('maxTokens').value);
+        saveSettings();
+        updateTokenUsage();
+        alert('Paramètres enregistrés.');
+      });
+      if (newSaveEmailBtn) {
+        newSaveEmailBtn.addEventListener('click', () => {
+          settings.emailServiceId = document.getElementById('emailServiceId').value.trim();
+          settings.emailTemplateId = document.getElementById('emailTemplateId').value.trim();
+          settings.emailUserId = document.getElementById('emailUserId').value.trim();
+          const resetTplInput = document.getElementById('emailResetTemplateId');
+          settings.emailResetTemplateId = resetTplInput ? resetTplInput.value.trim() : '';
+          saveSettings();
+          alert('Paramètres EmailJS enregistrés.');
+        });
+      }
+      // Ajout du gestionnaire pour l’enregistrement du design
+      if (newSaveDesignBtn) {
+        newSaveDesignBtn.addEventListener('click', saveDesignSettings);
+      }
+      // Gestionnaire de lecture du fichier de fond du bandeau
+      if (newDesignFileInput) {
+        newDesignFileInput.addEventListener('change', handleHeroFile);
+      }
+
+      // Gestionnaire pour le logo de l’organisation
+      if (newLogoInput) {
+        newLogoInput.addEventListener('change', handleLogoFile);
+      }
+
+      // Écouteurs en direct pour la personnalisation du design (champs, couleurs, hauteur, visibilités)
+      const designTagInput = document.getElementById('designTagline');
+      const designAccentInput = document.getElementById('designAccentColor');
+      const designAccentLightInput = document.getElementById('designAccentLightColor');
+      const designHeightInput = document.getElementById('designBannerHeight');
+      const designShowCactusInput = document.getElementById('designShowCactus');
+      const designShowPigInput = document.getElementById('designShowPig');
+      const designScaleInput = document.getElementById('designImageScale');
+      if (designTagInput) designTagInput.addEventListener('input', updateDesignFromForm);
+      if (designAccentInput) designAccentInput.addEventListener('input', updateDesignFromForm);
+      if (designAccentLightInput) designAccentLightInput.addEventListener('input', updateDesignFromForm);
+      if (designHeightInput) designHeightInput.addEventListener('input', updateDesignFromForm);
+      if (designShowCactusInput) designShowCactusInput.addEventListener('change', updateDesignFromForm);
+      if (designShowPigInput) designShowPigInput.addEventListener('change', updateDesignFromForm);
+      if (designScaleInput) designScaleInput.addEventListener('input', updateDesignFromForm);
+      // Écouteur pour le décalage vertical du bandeau : met à jour le design à la volée
+      const designOffsetInput = document.getElementById('designBannerOffset');
+      if (designOffsetInput) designOffsetInput.addEventListener('input', updateDesignFromForm);
+    }
+
+    // Attach events
+    document.addEventListener('DOMContentLoaded', () => {
+      loadData();
+      loadUsers();
+      // MEET: charger les likes, passes et matches dès l'initialisation pour
+      // permettre la détection de matches réciproques.  Sans cet appel, le
+      // moteur de rencontre ne peut pas savoir si un autre utilisateur nous
+      // a déjà liké.
+      loadMeet();
+      // appliquer immédiatement le design enregistré (slogan, couleurs, image de bandeau)
+      applyDesign();
+      // Vérifier si l’URL contient un jeton de confirmation ou de réinitialisation
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const confirmToken = urlParams.get('confirm');
+        if (confirmToken) {
+          const usr = users.find(u => u.confirmationToken === confirmToken);
+          if (usr) {
+            usr.confirmed = true;
+            // effacer le token pour éviter les confirmations multiples
+            delete usr.confirmationToken;
+            saveUsers();
+            alert('Merci, votre compte est maintenant confirmé ! Vous pouvez vous connecter.');
+            // retirer le paramètre de l’URL sans recharger la page
+            history.replaceState(null, '', window.location.pathname);
+          } else {
+            alert('Jeton de confirmation invalide ou expiré.');
+          }
+        }
+
+        // Gestion d’un lien de réinitialisation : ?reset=xxx
+        const resetToken = urlParams.get('reset');
+        if (resetToken) {
+          const usrReset = users.find(u => u.resetToken === resetToken);
+          if (usrReset) {
+            // Afficher le formulaire de réinitialisation de mot de passe avec le token
+            showResetPasswordForm(resetToken);
+          } else {
+            alert('Jeton de réinitialisation invalide ou expiré.');
+          }
+          // retirer le paramètre de l’URL
+          history.replaceState(null, '', window.location.pathname);
+        }
+      } catch (err) {
+        console.warn('Erreur lors du traitement du token de confirmation :', err);
+      }
+      // Vérifie si un utilisateur est connecté
+      if (!currentUser) {
+        showAuthModal();
+      } else {
+        document.getElementById('logoutBtn').style.display = 'inline-block';
+      }
+      renderProjects();
+      renderResources();
+      initTabs();
+      initSettings();
+      // Bouton d’ajout / mise à jour de fiche.  Si un projet est en cours d’édition, on met à jour;
+      // sinon on ajoute une nouvelle fiche.
+      document.getElementById('addProject').addEventListener('click', () => {
+        if (editProjectIndex !== null) {
+          updateProject();
+        } else {
+          addProject();
+        }
+      });
+      // L’onglet de matching manuel n’existe plus.  Ne pas attacher d’écouteur sur calcMatch si l’élément est absent.
+      const calcBtn = document.getElementById('calcMatch');
+      if (calcBtn) calcBtn.addEventListener('click', calculateMatch);
+      document.getElementById('exportData').addEventListener('click', exportData);
+      document.getElementById('importFile').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) importData(file);
+      });
+      // Recherche avancée : attacher l’écouteur au bouton de filtrage et au rafraîchissement de la rencontre
+      const filterBtn = document.getElementById('applySearchFilters');
+      if (filterBtn) {
+        filterBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          applySearchFilters();
+        });
+      }
+      const refreshBtn = document.getElementById('refreshMeet');
+      if (refreshBtn) {
+        refreshBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          renderMeetSearch();
+        });
+      }
+
+      // Recherche de fiches : mettre à jour la liste au fur et à mesure de la saisie
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          renderSearchResults(e.target.value);
+        });
+      }
+
+      // Gestionnaire pour fermer le modal d’information utilisateur
+      const closeUserInfoBtn = document.getElementById('closeUserInfo');
+      if (closeUserInfoBtn) closeUserInfoBtn.addEventListener('click', hideUserInfo);
+      // événements pour l’authentification
+      document.getElementById('loginButton').addEventListener('click', loginUser);
+      document.getElementById('registerButton').addEventListener('click', registerUser);
+      document.getElementById('logoutBtn').addEventListener('click', logoutUser);
+      // Déclencheurs pour le menu utilisateur : profil et messages
+      const navProfileBtn = document.getElementById('navProfile');
+      if (navProfileBtn) navProfileBtn.addEventListener('click', () => switchTab('profile'));
+      const navMessagesBtn = document.getElementById('navMessages');
+      if (navMessagesBtn) navMessagesBtn.addEventListener('click', () => switchTab('messages'));
+      document.getElementById('showRegister').addEventListener('click', () => {
+        toggleToRegister();
+      });
+      document.getElementById('showLogin').addEventListener('click', () => {
+        toggleToLogin();
+      });
+
+      // Boutons pour la gestion des mots de passe oubliés
+      const sendResetBtn = document.getElementById('sendResetLinkButton');
+      if (sendResetBtn) sendResetBtn.addEventListener('click', sendResetLink);
+      const resetPwdBtn = document.getElementById('resetPasswordButton');
+      if (resetPwdBtn) resetPwdBtn.addEventListener('click', () => { resetPassword(); });
+
+      // A11y : fermeture de la modale d’authentification avec la touche Échap et piège du focus
+      document.addEventListener('keydown', (e) => {
+        const auth = document.getElementById('authModal');
+        if (auth && auth.style.display !== 'none') {
+          if (e.key === 'Escape') {
+            hideAuthModal();
+          }
+          const panel = auth.querySelector('.auth-content');
+          if (panel) {
+            const focusables = panel.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            if (focusables.length) {
+              const first = focusables[0];
+              const last = focusables[focusables.length - 1];
+              if (e.key === 'Tab') {
+                if (e.shiftKey && document.activeElement === first) {
+                  e.preventDefault();
+                  last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                  e.preventDefault();
+                  first.focus();
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // événements pour le profil et la messagerie
+      const saveProfileBtn = document.getElementById('saveProfile');
+      if (saveProfileBtn) saveProfileBtn.addEventListener('click', saveProfileData);
+      const driveBtn = document.getElementById('openDrive');
+      if (driveBtn) driveBtn.addEventListener('click', openDriveFolder);
+
+      // Ajout du gestionnaire pour l’upload de demandes PDF depuis le profil
+      const uploadDemandBtnEl = document.getElementById('uploadDemandBtn');
+      if (uploadDemandBtnEl) uploadDemandBtnEl.addEventListener('click', uploadDemand);
+      // Mettre à jour l’interface si un utilisateur est déjà connecté
+      if (currentUser) {
+        updateUIForRole();
+        updateMessageBadge();
+        renderProfileSection();
+      }
+    });
+  </script>
+</body>
+</html>
