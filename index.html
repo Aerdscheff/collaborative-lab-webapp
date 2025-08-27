@@ -385,12 +385,11 @@
     <h1>Collaborativ Lab – <span style="color:var(--accent)">Äerdschëff</span></h1>
     <nav id="tabs" role="tablist" aria-label="Navigation principale">
       <button data-tab="create" class="active" onclick="switchTab('create')" role="tab" aria-selected="true">Créer une fiche</button>
-      <!-- Remplace l'ancien onglet "Matching" par un moteur de recherche de fiches -->
       <button data-tab="search" onclick="switchTab('search')" role="tab" aria-selected="false">Recherche</button>
+      <!-- Le moteur de correspondance est disponible via l’onglet Matching, placé entre Recherche et Ressources -->
+      <button data-tab="meet" onclick="switchTab('meet')" role="tab" aria-selected="false">Matching</button>
       <button data-tab="resources" onclick="switchTab('resources')" role="tab" aria-selected="false">Ressources</button>
-      <!-- Onglet À propos -->
       <button data-tab="about" onclick="switchTab('about')" role="tab" aria-selected="false">À propos</button>
-      <!-- Onglet Administration : n’est visible que pour les administrateurs -->
       <button data-tab="settings" id="adminTab" style="display:none;" onclick="switchTab('settings')" role="tab" aria-selected="false">Administration</button>
     </nav>
   </header>
@@ -621,6 +620,16 @@
         <h3>Accès au Drive</h3>
         <button class="btn" id="openDrive">Ouvrir le dossier Drive</button>
       </div>
+
+      <!-- Demandes PDF : les utilisateurs peuvent téléverser et consulter leurs demandes au format PDF -->
+      <div class="card">
+        <h3>Demandes PDF</h3>
+        <div class="form-group">
+          <input id="demandFile" type="file" accept="application/pdf">
+          <button class="btn" id="uploadDemandBtn" style="margin-left:0.5rem;">Ajouter</button>
+        </div>
+        <ul id="demandList"></ul>
+      </div>
     </section>
 
     <!-- Section: Messages -->
@@ -664,26 +673,12 @@
           </div>
           <button class="btn" id="saveApiKey">Enregistrer</button>
         </div>
-        <div class="card">
+        <!-- La configuration EmailJS est désormais gérée en dehors de l’application.  
+             On masque cette carte dans la console d’administration pour éviter toute confusion. -->
+        <div class="card" id="emailSettingsCard" style="display:none;">
           <h3>Envoi des emails (EmailJS)</h3>
-          <p style="font-size:0.85rem;">Configurez EmailJS pour permettre l’envoi automatique d’un email de confirmation après la création d’un compte.</p>
-          <div class="form-group">
-            <label for="emailServiceId">Service ID</label>
-            <input id="emailServiceId" type="text" placeholder="Ex : service_xxx">
-          </div>
-          <div class="form-group">
-            <label for="emailTemplateId">Template ID</label>
-            <input id="emailTemplateId" type="text" placeholder="Ex : template_xxx">
-          </div>
-          <div class="form-group">
-            <label for="emailUserId">User ID</label>
-            <input id="emailUserId" type="text" placeholder="Ex : user_xxx">
-          </div>
-          <div class="form-group">
-            <label for="emailResetTemplateId">Template ID (réinitialisation)</label>
-            <input id="emailResetTemplateId" type="text" placeholder="Ex : template_reset" />
-          </div>
-          <button class="btn" id="saveEmailSettings">Enregistrer EmailJS</button>
+          <p style="font-size:0.85rem;">La configuration EmailJS est désormais gérée en dehors de l’application.</p>
+          <p style="font-size:0.85rem;">Veuillez utiliser la console du fournisseur pour ajuster ces paramètres.</p>
         </div>
         <div class="card">
           <h3>Budget mensuel (tokens)</h3>
@@ -743,6 +738,19 @@
         <div class="form-group">
           <label for="designImageScale">Échelle horizontale de l’image (0.5–2)</label>
           <input id="designImageScale" type="range" min="0.5" max="2" step="0.1" value="1">
+        </div>
+        <!-- Réglage du décalage vertical de l’image (permet de « croper » le bandeau sans modifier l’image) -->
+        <div class="form-group">
+          <label for="designBannerOffset">Décalage vertical (%)</label>
+          <input id="designBannerOffset" type="range" min="0" max="100" step="1" value="0">
+          <small>Fais glisser pour ajuster la partie visible de l’image dans le bandeau.</small>
+        </div>
+        <!-- Décalage vertical pour ajuster le cadrage de l’image de bandeau.  
+             0 % = haut de l’image, 100 % = bas de l’image. Cela permet au 
+             responsable de recadrer le bandeau sans éditer l’image originale. -->
+        <div class="form-group">
+          <label for="designBannerOffset">Décalage vertical (%)</label>
+          <input id="designBannerOffset" type="range" min="0" max="100" step="1" value="0">
         </div>
         <div class="form-group">
           <label>Éléments décoratifs</label>
@@ -826,6 +834,8 @@
                                height: 300,
                                // facteur d’échelle pour la taille de l’image de fond (1 = taille par défaut)
                                imageScale: 1,
+                               // Décalage vertical en pourcentage pour recadrer l’image de bandeau
+                               offsetY: 0,
                                // visibilité des éléments décoratifs
                                showCactus: true,
                                showPig: true } };
@@ -981,8 +991,18 @@
     function loadUsers() {
       const u = localStorage.getItem(USERS_KEY);
       if (u) users = JSON.parse(u);
+      // S'assurer que chaque utilisateur possède un tableau de demandes pour éviter les valeurs undefined
+      if (users && Array.isArray(users)) {
+        users.forEach((usr) => {
+          if (!usr.demands) usr.demands = [];
+        });
+      }
       const cu = localStorage.getItem(CURRENT_USER_KEY);
-      if (cu) currentUser = JSON.parse(cu);
+      if (cu) {
+        currentUser = JSON.parse(cu);
+        // S'assurer que le currentUser a également le tableau de demandes
+        if (currentUser && !currentUser.demands) currentUser.demands = [];
+      }
     }
     function saveUsers() {
       localStorage.setItem(USERS_KEY, JSON.stringify(users));
@@ -1041,6 +1061,9 @@
         confirmationToken,
         registeredAt: new Date().toISOString(),
         lastLoginAt: null
+        ,
+        // Liste des demandes PDF téléversées par l'utilisateur (objets { name, data })
+        demands: []
       };
       users.push(newUser);
       saveUsers();
@@ -1915,7 +1938,9 @@
           } else {
             hero.style.backgroundSize = 'cover';
           }
-          hero.style.backgroundPosition = 'center';
+          // Centrer horizontalement et appliquer le décalage vertical
+          const offset = (settings.design && typeof settings.design.offsetY === 'number') ? settings.design.offsetY : 0;
+          hero.style.backgroundPosition = '50% ' + offset + '%';
         } else {
           hero.style.backgroundImage = '';
           hero.style.backgroundSize = '';
@@ -2006,6 +2031,12 @@
       if (showPigInput) {
         showPigInput.checked = settings.design.showPig !== false;
       }
+
+      // Définir la valeur initiale du décalage vertical si le champ existe
+      const offsetInput = document.getElementById('designBannerOffset');
+      if (offsetInput) {
+        offsetInput.value = (settings.design && typeof settings.design.offsetY === 'number') ? settings.design.offsetY : 0;
+      }
     }
 
     // Lit l’image sélectionnée et met à jour l’aperçu
@@ -2059,6 +2090,8 @@
       const showCact = document.getElementById('designShowCactus').checked;
       const showPig = document.getElementById('designShowPig').checked;
       const scaleVal = parseFloat(document.getElementById('designImageScale').value) || 1;
+      // Lire le décalage vertical (%)
+      const offsetVal = parseInt(document.getElementById('designBannerOffset')?.value) || 0;
       settings.design = {
         tagline: tag,
         accent: acc,
@@ -2067,7 +2100,8 @@
         height: heightVal,
         showCactus: showCact,
         showPig: showPig,
-        imageScale: scaleVal
+        imageScale: scaleVal,
+        offsetY: offsetVal
       };
       saveSettings();
       applyDesign();
@@ -2085,6 +2119,11 @@
       settings.design.showPig = document.getElementById('designShowPig').checked;
       // Mettre à jour l’échelle de l’image horizontale
       settings.design.imageScale = parseFloat(document.getElementById('designImageScale').value) || 1;
+      // Définir le décalage vertical (%).  S’il n’existe pas, conserver la valeur actuelle.
+      const offInput = document.getElementById('designBannerOffset');
+      if (offInput) {
+        settings.design.offsetY = parseInt(offInput.value) || 0;
+      }
       // Ne modifie pas heroImage ici (il est mis à jour via handleHeroFile)
       applyDesign();
     }
@@ -2099,6 +2138,8 @@
       document.getElementById('profileSubject').value = prof.subject || '';
       document.getElementById('profileClasses').value = prof.classes || '';
       document.getElementById('profileSdgs').value = prof.sdgs || '';
+      // Afficher la liste des demandes PDF et initialiser l'input d'upload
+      renderDemands();
       renderMyProjects();
     }
 
@@ -2129,6 +2170,55 @@
         container.append(el('p', 'Aucune fiche associée à votre compte.'));
         return;
       }
+
+    // Affiche la liste des demandes PDF pour l'utilisateur courant
+    function renderDemands() {
+      const listEl = document.getElementById('demandList');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      if (!currentUser) return;
+      const demands = currentUser.demands || [];
+      if (!demands.length) {
+        listEl.append(el('li', 'Aucune demande.'));
+        return;
+      }
+      demands.forEach((d, idx) => {
+        const li = el('li');
+        // lien de téléchargement pour le PDF
+        const a = el('a', d.name, { href: d.data, download: d.name, target: '_blank', rel: 'noopener noreferrer', style: 'color: var(--accent); text-decoration: underline;' });
+        li.append(a);
+        listEl.append(li);
+      });
+    }
+
+    // Gestion de l'upload de demande PDF : lit le fichier en base64 et l'ajoute au profil de l'utilisateur
+    function uploadDemand() {
+      const fileInput = document.getElementById('demandFile');
+      if (!fileInput || !fileInput.files || !fileInput.files.length) return;
+      const file = fileInput.files[0];
+      // Vérifier le type
+      if (!file || file.type !== 'application/pdf') {
+        alert('Merci de sélectionner un fichier PDF.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const dataUrl = e.target.result;
+        if (!currentUser.demands) currentUser.demands = [];
+        currentUser.demands.push({ name: file.name, data: dataUrl });
+        // Mettre à jour le tableau global des utilisateurs
+        const idx = users.findIndex(u => u.email === currentUser.email);
+        if (idx >= 0) {
+          users[idx] = currentUser;
+          saveUsers();
+          setCurrentUser(currentUser);
+        }
+        renderDemands();
+        alert('Document ajouté.');
+        fileInput.value = '';
+      };
+      reader.readAsDataURL(file);
+    }
       mine.forEach(p => {
         const div = el('div');
         div.style.marginBottom = '0.5rem';
@@ -2754,12 +2844,27 @@
       const userProjects = projects.filter(p => p.owner === user.email);
       if (userProjects.length) {
         userProjects.forEach(p => {
-          ul.append(el('li', (p.level || 'Sans titre') + ' – ' + (p.summary ? p.summary.slice(0, 60) + '…' : '')));
+          ul.append(el('li', (p.title || p.level || 'Sans titre') + ' – ' + (p.skills && p.skills.length ? p.skills.join(', ') : '')));
         });
       } else {
         ul.append(el('li', 'Aucune fiche créée.'));
       }
       content.append(ul);
+      // Afficher la liste des demandes PDF
+      content.append(el('h4', 'Demandes PDF'));
+      const demandList = el('ul');
+      const demands = user.demands || [];
+      if (demands.length) {
+        demands.forEach(d => {
+          const li = el('li');
+          const link = el('a', d.name, { href: d.data, download: d.name, target: '_blank', rel: 'noopener noreferrer', style: 'color: var(--accent); text-decoration: underline;' });
+          li.append(link);
+          demandList.append(li);
+        });
+      } else {
+        demandList.append(el('li', 'Aucune demande.'));
+      }
+      content.append(demandList);
       modal.style.display = 'flex';
     }
 
@@ -2995,6 +3100,9 @@
       if (designShowCactusInput) designShowCactusInput.addEventListener('change', updateDesignFromForm);
       if (designShowPigInput) designShowPigInput.addEventListener('change', updateDesignFromForm);
       if (designScaleInput) designScaleInput.addEventListener('input', updateDesignFromForm);
+      // Écouteur pour le décalage vertical du bandeau : met à jour le design à la volée
+      const designOffsetInput = document.getElementById('designBannerOffset');
+      if (designOffsetInput) designOffsetInput.addEventListener('input', updateDesignFromForm);
     }
 
     // Attach events
@@ -3151,6 +3259,10 @@
       if (saveProfileBtn) saveProfileBtn.addEventListener('click', saveProfileData);
       const driveBtn = document.getElementById('openDrive');
       if (driveBtn) driveBtn.addEventListener('click', openDriveFolder);
+
+      // Ajout du gestionnaire pour l’upload de demandes PDF depuis le profil
+      const uploadDemandBtnEl = document.getElementById('uploadDemandBtn');
+      if (uploadDemandBtnEl) uploadDemandBtnEl.addEventListener('click', uploadDemand);
       // Mettre à jour l’interface si un utilisateur est déjà connecté
       if (currentUser) {
         updateUIForRole();
