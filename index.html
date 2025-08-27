@@ -16,7 +16,7 @@
     Cette application web est un prototype « monobloc » qui tourne entièrement dans le navigateur : aucune
     dépendance serveur (hormis l’API OpenAI si l’utilisateur la configure dans les paramètres).  Elle permet
     de créer des fiches pédagogiques, calculer des compatibilités entre fiches, générer des scénarios
-    transdisciplinaires avec ChatGPT‑5 et capitaliser les ressources générées.  Le design s’inspire de la
+    transdisciplinaires avec ChatGPT et capitaliser les ressources générées.  Le design s’inspire de la
     charte visuelle d’Äerdschëff : palette rosée, bandeau « sol » et logo officiel.
   -->
   <style>
@@ -2453,6 +2453,27 @@ async function renderProjects() {
         container.append(el('p', 'Aucune fiche associée à votre compte.'));
         return;
       }
+      mine.forEach(p => {
+        const div = el('div');
+        div.style.marginBottom = '0.5rem';
+        // Déterminer l’index global du projet pour la modification
+        const idx = projects.indexOf(p);
+        // Titre et matières
+        div.append(
+          el('strong', p.title || p.level || 'Sans titre'),
+          el('span', ' – ' + (p.skills && p.skills.length ? p.skills.join(', ') : '—'))
+        );
+        // Bouton de modification
+        const editBtn = el('button', 'Modifier', { style: 'margin-left:0.5rem; padding:0.2rem 0.5rem; font-size:0.8rem; border:1px solid var(--sand); border-radius:0.3rem; background:var(--accent-light); color:var(--dark); cursor:pointer;' });
+        editBtn.addEventListener('click', () => {
+          // Ouvrir l’onglet création et charger la fiche pour édition
+          if (typeof switchTab === 'function') switchTab('create');
+          loadProjectForEdit(idx);
+        });
+        div.append(editBtn);
+        container.append(div);
+      });
+    }
 
     // Affiche la liste des demandes PDF pour l'utilisateur courant
     function renderDemands() {
@@ -2501,27 +2522,6 @@ async function renderProjects() {
         fileInput.value = '';
       };
       reader.readAsDataURL(file);
-    }
-      mine.forEach(p => {
-        const div = el('div');
-        div.style.marginBottom = '0.5rem';
-        // Déterminer l’index global du projet pour la modification
-        const idx = projects.indexOf(p);
-        // Titre et matières
-        div.append(
-          el('strong', p.title || p.level || 'Sans titre'),
-          el('span', ' – ' + (p.skills && p.skills.length ? p.skills.join(', ') : '—'))
-        );
-        // Bouton de modification
-        const editBtn = el('button', 'Modifier', { style: 'margin-left:0.5rem; padding:0.2rem 0.5rem; font-size:0.8rem; border:1px solid var(--sand); border-radius:0.3rem; background:var(--accent-light); color:var(--dark); cursor:pointer;' });
-        editBtn.addEventListener('click', () => {
-          // Ouvrir l’onglet création et charger la fiche pour édition
-          if (typeof switchTab === 'function') switchTab('create');
-          loadProjectForEdit(idx);
-        });
-        div.append(editBtn);
-        container.append(div);
-      });
     }
 
     // Ouvre le dossier Google Drive dans un nouvel onglet
