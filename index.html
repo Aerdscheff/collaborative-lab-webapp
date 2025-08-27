@@ -5,10 +5,10 @@
   <!-- Politique de sécurité du contenu pour limiter les sources et protéger contre les injections -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self';
-                 connect-src 'self' https://api.openai.com https://api.emailjs.com;
+                 connect-src 'self' https://api.openai.com https://api.emailjs.com https://*.supabase.co http://localhost:8000;
                  img-src 'self' data:;
                  style-src 'self' 'unsafe-inline';
-                 script-src 'self' 'unsafe-inline';
+                 script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
                  frame-ancestors 'none';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Äerdschëff SES – Web App Locale</title>
@@ -411,6 +411,58 @@
   <!-- Charger EmailJS pour l’envoi des emails (si le service est configuré).  
        Vous devrez fournir les identifiants dans l’onglet Administration.  -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.6.4/dist/email.min.js"></script>
+  <!-- Charger Supabase JS pour l'authentification et la persistance distante -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // Configuration Supabase à personnaliser par l'administrateur.
+    // Remplacez ces valeurs par l'URL et la clé anonymes de votre projet Supabase.
+    const SUPABASE_URL = 'https://your-project.supabase.co';
+    const SUPABASE_ANON_KEY = 'your-anon-key';
+    // Instancie le client Supabase si les valeurs sont définies. Utilisez 'var' pour exposer à l'échelle globale.
+    var supabaseClient = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      : null;
+
+    // URL de base de l'API FastAPI. L'administrateur doit la définir avec l'URL de déploiement.
+    const API_BASE_URL = 'http://localhost:8000'; // à personnaliser (ex: https://aerdscheff-api.onrender.com)
+    // Jeton d'accès à l'API (issu de Supabase). Mis à jour lors de la connexion.
+    let currentToken = null;
+
+    /**
+     * Enveloppe pour appeler l'API en injectant automatiquement le jeton JWT
+     * émis par Supabase. Retourne la promesse de fetch.
+     * @param {string} path Chemin relatif de l'API, ex: '/fiches'
+     * @param {object} options Options fetch (method, headers, body, etc.)
+     */
+    async function apiFetch(path, options = {}) {
+      const headers = options.headers || {};
+      // Si un jeton est disponible, l'inclure dans le header Authorization.
+      if (currentToken) {
+        headers['Authorization'] = 'Bearer ' + currentToken;
+      }
+      headers['Content-Type'] = 'application/json';
+      return fetch(API_BASE_URL + path, { ...options, headers });
+    }
+
+    /**
+     * Charge le profil utilisateur depuis l'API et met à jour currentUser.profile.
+     * Doit être appelée après une connexion réussie.
+     */
+    async function loadProfile() {
+      if (!currentUser || !supabaseClient || !currentToken) return;
+      try {
+        const res = await apiFetch('/me/profile');
+        if (res.ok) {
+          const prof = await res.json();
+          if (prof) {
+            currentUser.profile = prof;
+          }
+        }
+      } catch (e) {
+        console.warn('Impossible de charger le profil depuis l’API', e);
+      }
+    }
+  </script>
 
   <!-- Modale d’authentification (inscription/connexion) -->
   <div id="authModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="authTitle">
@@ -1044,6 +1096,33 @@
       }
       // Déterminer le rôle : certaines adresses sont administratrices d’emblée
       const role = (email === 'tarik@aerdscheff.lu' || email === 'monica@aerdscheff.lu') ? 'admin' : 'teacher';
+      // Si Supabase est configuré, effectuer l'inscription via Supabase. Cela remplace le stockage local.
+      if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+        try {
+          const { data: signupData, error: signupError } = await supabaseClient.auth.signUp({
+            email: email,
+            password: pwd,
+            options: {
+              data: {
+                name: name,
+                role: role
+              }
+            }
+          });
+          if (signupError) {
+            alert('Erreur de création de compte via Supabase : ' + signupError.message);
+            return;
+          }
+          // Aucun stockage local n'est nécessaire lorsque Supabase est utilisé.
+          alert('Compte Supabase créé ! Vérifie ton email pour confirmation.');
+          // On quitte la fonction pour éviter le fallback localStorage.
+          return;
+        } catch (supErr) {
+          console.error('Supabase sign-up error:', supErr);
+          alert('Impossible de créer le compte via Supabase.');
+          return;
+        }
+      }
       // Générer le hash du mot de passe et le sel
       const { hashB64, saltB64 } = await hashPassword(pwd);
       // Générer un token de confirmation pour l’activation
@@ -1081,6 +1160,51 @@
     async function loginUser() {
       const email = document.getElementById('loginEmail').value.trim().toLowerCase();
       const pwd = document.getElementById('loginPassword').value;
+      // Si Supabase est disponible, utiliser l'authentification distante
+      if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+        try {
+          const { data: loginData, error: loginError } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: pwd
+          });
+          if (loginError) {
+            alert('Erreur de connexion Supabase : ' + loginError.message);
+            return;
+          }
+          if (loginData && loginData.session) {
+            // Stocker le jeton JWT pour les appels API
+            currentToken = loginData.session.access_token;
+          }
+          const supUser = loginData && loginData.user;
+          if (supUser) {
+            const userMeta = supUser.user_metadata || {};
+            // Construire l'objet currentUser à partir des métadonnées Supabase
+            const remoteUser = {
+              email: supUser.email,
+              name: userMeta.name || '',
+              role: userMeta.role || 'teacher',
+              confirmed: true,
+              profile: null
+            };
+            setCurrentUser(remoteUser);
+            // Charger le profil complet depuis l'API
+            await loadProfile();
+            hideAuthModal();
+            document.getElementById('logoutBtn').style.display = 'inline-block';
+            updateUIForRole();
+            updateMessageBadge();
+            renderProfileSection();
+            // Actualiser la liste de toutes les fiches après connexion
+            await renderProjects();
+            return;
+          }
+        } catch (err) {
+          console.error('Erreur de connexion Supabase :', err);
+          alert('Impossible de se connecter via Supabase.');
+          return;
+        }
+      }
+      // Fallback : authentification locale via LocalStorage
       const user = users.find(u => u.email === email);
       if (!user) {
         alert('Identifiants incorrects.');
@@ -1111,6 +1235,16 @@
     }
 
     function logoutUser() {
+      // Si Supabase est disponible, effectuer la déconnexion distante
+      if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+        try {
+          supabaseClient.auth.signOut();
+        } catch (err) {
+          console.warn('Erreur de déconnexion Supabase', err);
+        }
+        // Réinitialiser le jeton local
+        currentToken = null;
+      }
       setCurrentUser(null);
       showAuthModal();
       document.getElementById('logoutBtn').style.display = 'none';
@@ -1293,10 +1427,21 @@
     }
 
     // Render project cards sans innerHTML (prévention XSS)
-    function renderProjects() {
+async function renderProjects() {
       const container = document.getElementById('projects');
       container.innerHTML = '';
-      if (!projects.length) {
+      // Si Supabase est configuré et que l'utilisateur est connecté, charger les fiches depuis l'API
+      if (typeof supabaseClient !== 'undefined' && supabaseClient && currentToken) {
+        try {
+          const res = await apiFetch('/fiches');
+          if (res.ok) {
+            projects = await res.json();
+          }
+        } catch (err) {
+          console.warn('Erreur lors du chargement des fiches depuis l’API :', err);
+        }
+      }
+      if (!projects || !projects.length) {
         container.append(el('p', 'Aucune fiche enregistrée. Commence par en créer une ci‑dessus !'));
         return;
       }
@@ -1342,7 +1487,7 @@
     }
 
     // Add a new project
-    function addProject() {
+    async function addProject() {
       const title = document.getElementById('title').value.trim();
       const level = document.getElementById('level').value.trim();
       const skills = document.getElementById('skills').value.split(',').map(s => s.trim()).filter(s => s);
@@ -1356,42 +1501,73 @@
         alert('Merci d’indiquer au moins un titre et un résumé.');
         return;
       }
+      const projectPayload = {
+        title: title,
+        // Convertir le niveau simple en tableau levels attendu par l'API
+        levels: level ? [level] : [],
+        // skills correspond aux disciplines dans l'API
+        disciplines: skills,
+        period: period,
+        modalities: modalities,
+        tags: tags,
+        summary: summary,
+        pedagogy: pedagogy
+      };
+      // Sauvegarde via API si disponible
+      if (typeof supabaseClient !== 'undefined' && supabaseClient && currentToken) {
+        try {
+          const res = await apiFetch('/fiches', { method: 'POST', body: JSON.stringify(projectPayload) });
+          if (res.ok) {
+            const created = await res.json();
+            // Ajouter à la liste locale pour l’affichage et le fallback
+            projects.push(created);
+            renderProjects();
+            await renderMyProjects();
+            alert('Fiche enregistrée sur le serveur.');
+            // Générer un doc de prévisualisation pour l’utilisateur (optionnel)
+            try {
+              generateDocPreview(created);
+            } catch (err) {
+              console.warn('Prévisualisation .doc impossible :', err);
+            }
+            // Proposer l’export Drive pour la fiche nouvellement créée
+            try {
+              uploadProjectToDrive(created);
+            } catch (err) {
+              console.warn('Impossible de lancer l’export Drive :', err);
+            }
+            // Nettoyer le formulaire et sortir du mode édition
+            resetProjectForm();
+            // Proposer l’auto-match si la configuration le permet
+            if (settings.autoCollab && settings.apiKey && settings.used < (settings.budget * 0.8)) {
+              runAutoMatch(created);
+            }
+            return;
+          } else {
+            console.warn('Erreur API création fiche :', await res.text());
+          }
+        } catch (err) {
+          console.warn('Erreur lors de l’envoi de la fiche via l’API :', err);
+        }
+      }
+      // Fallback : enregistrer localement
       const project = { title, level, skills, period, modalities, tags, summary, pedagogy, createdAt: Date.now() };
       // associer l’utilisateur courant
       project.owner = currentUser ? currentUser.email : null;
       projects.push(project);
       saveProjects();
       renderProjects();
-      // Générer et présenter un aperçu au format .doc avant l’export automatique
       try {
         generateDocPreview(project);
       } catch (err) {
         console.warn('Prévisualisation .doc impossible :', err);
       }
-      // Proposer l’export vers Google Drive
       try {
         uploadProjectToDrive(project);
       } catch (err) {
         console.warn('Impossible de lancer l’export Drive :', err);
       }
-      // Clear fields
-      document.getElementById('title').value = '';
-      document.getElementById('level').value = '';
-      document.getElementById('skills').value = '';
-      document.getElementById('period').value = '';
-      document.getElementById('modalities').value = '';
-      document.getElementById('tags').value = '';
-      document.getElementById('summary').value = '';
-      // Réinitialiser les cases à cocher de pédagogie
-      document.querySelectorAll('input[name="pedagogy"]').forEach(cb => cb.checked = false);
-
-      // S’assurer que nous sortons du mode édition
-      editProjectIndex = null;
-      const addBtn2 = document.getElementById('addProject');
-      if (addBtn2) addBtn2.textContent = 'Ajouter la fiche';
-
-      // Lancer une proposition automatique de collaboration seulement si l’auto‑collab est activée,
-      // qu’une clé API est définie et que nous n’avons pas dépassé 80 % du quota.
+      resetProjectForm();
       if (settings.autoCollab && settings.apiKey && settings.used < (settings.budget * 0.8)) {
         runAutoMatch(project);
       }
@@ -1447,7 +1623,7 @@
    * Met à jour la fiche existante indiquée par editProjectIndex avec les valeurs du formulaire.
    * Génère un nouveau document .doc de prévisualisation et propose un nouvel export Drive.
    */
-  function updateProject() {
+  async function updateProject() {
     if (editProjectIndex == null || editProjectIndex < 0 || editProjectIndex >= projects.length) return;
     const title = document.getElementById('title').value.trim();
     const level = document.getElementById('level').value.trim();
@@ -1461,7 +1637,7 @@
       alert('Merci d’indiquer au moins un titre et un résumé.');
       return;
     }
-    // Mettre à jour l’objet projet
+    // Mettre à jour l’objet projet local
     const p = projects[editProjectIndex];
     p.title = title;
     p.level = level;
@@ -1472,10 +1648,52 @@
     p.summary = summary;
     p.pedagogy = pedagogy;
     p.updatedAt = Date.now();
+    // Construire la charge utile pour l’API
+    const payload = {
+      title: title,
+      levels: level ? [level] : [],
+      disciplines: skills,
+      period: period,
+      modalities: modalities,
+      tags: tags,
+      summary: summary,
+      pedagogy: pedagogy
+    };
+    // Sauvegarder via API si possible
+    if (typeof supabaseClient !== 'undefined' && supabaseClient && currentToken && p.id) {
+      try {
+        const res = await apiFetch(`/fiches/${p.id}`, { method: 'PUT', body: JSON.stringify(payload) });
+        if (res.ok) {
+          const updated = await res.json();
+          // Mettre à jour la fiche locale avec les valeurs retournées
+          projects[editProjectIndex] = updated;
+          await renderMyProjects();
+          renderProjects();
+          alert('Fiche mise à jour sur le serveur.');
+          try {
+            generateDocPreview(updated);
+          } catch (err) {
+            console.warn('Prévisualisation .doc impossible :', err);
+          }
+          try {
+            uploadProjectToDrive(updated);
+          } catch (err) {
+            console.warn('Impossible de lancer l’export Drive :', err);
+          }
+          resetProjectForm();
+          return;
+        } else {
+          console.warn('Erreur API mise à jour fiche :', await res.text());
+        }
+      } catch (err) {
+        console.warn('Erreur lors de la mise à jour via l’API :', err);
+      }
+    }
+    // Fallback local
     projects[editProjectIndex] = p;
     saveProjects();
     renderProjects();
-    renderMyProjects();
+    await renderMyProjects();
     try {
       generateDocPreview(p);
     } catch (err) {
@@ -1486,7 +1704,14 @@
     } catch (err) {
       console.warn('Impossible de lancer l’export Drive :', err);
     }
-    // Réinitialiser le formulaire et l’état
+    resetProjectForm();
+  }
+
+  /**
+   * Réinitialise le formulaire de création/édition de fiche et l'état d'édition.
+   * Utilisé après l'ajout ou la mise à jour d'une fiche.
+   */
+  function resetProjectForm() {
     document.getElementById('title').value = '';
     document.getElementById('level').value = '';
     document.getElementById('skills').value = '';
@@ -1495,11 +1720,9 @@
     document.getElementById('tags').value = '';
     document.getElementById('summary').value = '';
     document.querySelectorAll('input[name="pedagogy"]').forEach(cb => cb.checked = false);
-    // Réinitialiser l’index et le libellé du bouton
     editProjectIndex = null;
-    const addBtn = document.getElementById('addProject');
-    if (addBtn) addBtn.textContent = 'Ajouter la fiche';
-    alert('Fiche mise à jour !');
+    const addBtn2 = document.getElementById('addProject');
+    if (addBtn2) addBtn2.textContent = 'Ajouter la fiche';
   }
 
   /**
@@ -1810,7 +2033,31 @@
     }
 
     // Export and import
-    function exportData() {
+    async function exportData() {
+      // Si Supabase est configuré et que l'utilisateur admin est connecté, récupérer l’export complet via l'API
+      if (typeof supabaseClient !== 'undefined' && supabaseClient && currentToken && currentUser && currentUser.role === 'admin') {
+        try {
+          const res = await apiFetch('/export.json');
+          if (res.ok) {
+            const remoteData = await res.json();
+            const blob = new Blob([JSON.stringify(remoteData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'aerdscheff_data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            return;
+          } else {
+            console.warn('Erreur API export:', await res.text());
+          }
+        } catch (err) {
+          console.warn('Erreur lors de l’export via l’API :', err);
+        }
+      }
+      // Fallback : exporter les données locales seulement
       const data = {
         projects,
         resources,
@@ -2144,28 +2391,64 @@
     }
 
     // Enregistre le questionnaire pédagogique du profil
-    function saveProfileData() {
+    async function saveProfileData() {
       if (!currentUser) return;
-      currentUser.profile = {
+      const newProfile = {
         subject: document.getElementById('profileSubject').value.trim(),
         classes: document.getElementById('profileClasses').value.trim(),
         sdgs: document.getElementById('profileSdgs').value.trim()
       };
+      // Si Supabase est disponible et que l'utilisateur est connecté, sauvegarder via l'API.
+      if (typeof supabaseClient !== 'undefined' && supabaseClient && currentToken) {
+        try {
+          const res = await apiFetch('/me/profile', { method: 'PUT', body: JSON.stringify(newProfile) });
+          if (res.ok) {
+            currentUser.profile = newProfile;
+            alert('Profil enregistré sur le serveur.');
+            return;
+          } else {
+            console.warn('Erreur API save profile:', await res.text());
+          }
+        } catch (err) {
+          console.warn('Erreur lors de l’envoi du profil via l’API:', err);
+        }
+      }
+      // Fallback : stockage local uniquement
+      currentUser.profile = newProfile;
       const idx = users.findIndex(u => u.email === currentUser.email);
       if (idx >= 0) {
         users[idx] = currentUser;
         saveUsers();
       }
-      alert('Profil enregistré.');
+      alert('Profil enregistré localement.');
     }
 
     // Liste les fiches appartenant à l’utilisateur courant
-    function renderMyProjects() {
+    async function renderMyProjects() {
       const container = document.getElementById('myProjects');
       if (!container) return;
       container.innerHTML = '';
       if (!currentUser) return;
-      const mine = projects.filter(p => p.owner === currentUser.email);
+      // Charger les fiches via API si disponible
+      let mine = [];
+      if (typeof supabaseClient !== 'undefined' && supabaseClient && currentToken) {
+        try {
+          const res = await apiFetch('/fiches');
+          if (res.ok) {
+            const allFiches = await res.json();
+            // Filtrer par propriétaire
+            mine = allFiches.filter(f => f.owner === currentUser.email);
+            // Mettre à jour le cache local
+            projects = allFiches;
+          }
+        } catch (err) {
+          console.warn('Erreur de récupération des fiches via API :', err);
+        }
+      }
+      // Si mine vide, utiliser fallback local
+      if (!mine || !mine.length) {
+        mine = projects.filter(p => p.owner === currentUser.email);
+      }
       if (!mine.length) {
         container.append(el('p', 'Aucune fiche associée à votre compte.'));
         return;
