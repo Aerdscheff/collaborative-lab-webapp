@@ -16,7 +16,7 @@
     Cette application web est un prototype « monobloc » qui tourne entièrement dans le navigateur : aucune
     dépendance serveur (hormis l’API OpenAI si l’utilisateur la configure dans les paramètres).  Elle permet
     de créer des fiches pédagogiques, calculer des compatibilités entre fiches, générer des scénarios
-    transdisciplinaires avec ChatGPT et capitaliser les ressources générées.  Le design s’inspire de la
+    transdisciplinaires avec ChatGPT‑5 et capitaliser les ressources générées.  Le design s’inspire de la
     charte visuelle d’Äerdschëff : palette rosée, bandeau « sol » et logo officiel.
   -->
   <style>
@@ -416,8 +416,10 @@
   <script>
     // Configuration Supabase à personnaliser par l'administrateur.
     // Remplacez ces valeurs par l'URL et la clé anonymes de votre projet Supabase.
-    const SUPABASE_URL = 'https://your-project.supabase.co';
-    const SUPABASE_ANON_KEY = 'your-anon-key';
+    // Supabase configuration for production
+    // Project URL and anon key provided by the user
+    const SUPABASE_URL = 'https://lofsckrqyrouymqyfatm.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvZnNja3JxeXJvdXltcXlmYXRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyNDAyNTksImV4cCI6MjA3MTgxNjI1OX0.hUCEkHV8e7nz_BQgkvo-R2q6NC2Y5UdViV5LTV9l8A8';
     // Instancie le client Supabase si les valeurs sont définies. Utilisez 'var' pour exposer à l'échelle globale.
     var supabaseClient = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
       ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
