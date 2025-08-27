@@ -5,7 +5,7 @@
   <!-- Politique de sécurité du contenu pour limiter les sources et protéger contre les injections -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self';
-                 connect-src 'self' https://api.openai.com https://api.emailjs.com https://*.supabase.co http://localhost:8000;
+                 connect-src 'self' https://api.openai.com https://api.emailjs.com https://*.supabase.co https://aerdscheff.netlify.app;
                  img-src 'self' data:;
                  style-src 'self' 'unsafe-inline';
                  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
@@ -424,7 +424,7 @@
       : null;
 
     // URL de base de l'API FastAPI. L'administrateur doit la définir avec l'URL de déploiement.
-    const API_BASE_URL = 'http://localhost:8000'; // à personnaliser (ex: https://aerdscheff-api.onrender.com)
+    const API_BASE_URL = 'https://aerdscheff.netlify.app/'; // à personnaliser (URL de déploiement de l'API)
     // Jeton d'accès à l'API (issu de Supabase). Mis à jour lors de la connexion.
     let currentToken = null;
 
