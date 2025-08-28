@@ -3,3 +3,4 @@ uvicorn[standard]
 python-jose[cryptography]
 httpx
 pydantic
+email-validator
