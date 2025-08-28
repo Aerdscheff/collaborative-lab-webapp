@@ -421,9 +421,13 @@
     const SUPABASE_URL = 'https://lofsckrqyrouymqyfatm.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvZnNja3JxeXJvdXltcXlmYXRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyNDAyNTksImV4cCI6MjA3MTgxNjI1OX0.hUCEkHV8e7nz_BQgkvo-R2q6NC2Y5UdViV5LTV9l8A8';
     // Instancie le client Supabase si les valeurs sont définies. Utilisez 'var' pour exposer à l'échelle globale.
-    var supabaseClient = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
-      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-      : null;
+// Instancie le client Supabase avec des variables d'environnement si disponibles.
+const supabaseUrl = window.ENV?.SUPABASE_URL || SUPABASE_URL;
+const supabaseAnonKey = window.ENV?.SUPABASE_ANON_KEY || SUPABASE_ANON_KEY;
+var supabaseClient = (supabaseUrl && supabaseAnonKey && window.supabase)
+  ? window.supabase.createClient(supabaseUrl, supabaseAnonKey)
+  : null;
+  : null;
 
     // URL de base de l'API FastAPI. L'administrateur doit la définir avec l'URL de déploiement.
     const API_BASE_URL = 'https://collaborative-lab-webapp.onrender.com'; // à personnaliser (URL de déploiement de l'API)
