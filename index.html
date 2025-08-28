@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -35,6 +36,7 @@
     * {
       box-sizing: border-box;
     }
+    
     body {
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
@@ -958,6 +960,7 @@ var supabaseClient = (supabaseUrl && supabaseAnonKey && window.supabase)
       const wrap = el('div', '');
       wrap.append(el('strong', label + ' '), el('span', value || ''));
       return wrap;
+
     }
 
     /**
@@ -994,6 +997,7 @@ var supabaseClient = (supabaseUrl && supabaseAnonKey && window.supabase)
       return { hashB64, saltB64 };
     }
 
+    
     /**
      * Vérifie un mot de passe en recalculant le PBKDF2 avec le même sel et en comparant le
      * résultat.  Utilise crypto.timingSafeEqual si disponible pour éviter les attaques
