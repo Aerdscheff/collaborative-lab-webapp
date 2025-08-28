@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Response
 import os
 import asyncio
 from app.email_service import send_new_fiche_notification
@@ -181,7 +181,7 @@ async def update_fiche(
 
 
 @router.delete("/fiches/{fiche_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_fiche(fiche_id: str, email: str = Depends(get_current_user_email)) -> None:
+async def delete_fiche(fiche_id: str, email: str = Depends(get_current_user_email)) -> Response:
     """Delete a fiche by ID.
 
     Only the owner of the fiche can delete it (not enforced here).
@@ -195,4 +195,5 @@ async def delete_fiche(fiche_id: str, email: str = Depends(get_current_user_emai
         raise HTTPException(status_code=500, detail=str(exc))
     if response.count == 0:
         raise HTTPException(status_code=404, detail="Fiche not found")
-    return None
+    # Return an empty response with 204 No Content to avoid sending a response body
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
