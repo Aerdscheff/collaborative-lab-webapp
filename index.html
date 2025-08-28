@@ -1024,7 +1024,15 @@ var supabaseClient = (supabaseUrl && supabaseAnonKey && window.supabase)
       const set = localStorage.getItem(SETTINGS_KEY);
       if (set) settings = Object.assign(settings, JSON.parse(set));
       // S’assurer que l’objet design existe et dispose des propriétés attendues.
-      if (!settings.design) {
+  
+        // Override EmailJS settings from environment variables if provided
+  if (window.ENV) {
+    settings.emailServiceId = window.ENV.EMAIL_SERVICE_ID || settings.emailServiceId;
+    settings.emailTemplateId = window.ENV.EMAIL_TEMPLATE_ID || settings.emailTemplateId;
+    settings.emailUserId = window.ENV.EMAIL_USER_ID || settings.emailUserId;
+    settings.emailResetTemplateId = window.ENV.EMAIL_RESET_TEMPLATE_ID || settings.emailResetTemplateId;
+  }
+if (!settings.design) {
         settings.design = { tagline: '', accent: '', accentLight: '', heroImage: '', height: 300, showCactus: true, showPig: true };
       } else {
         settings.design.tagline = settings.design.tagline || '';
