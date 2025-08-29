@@ -130,5 +130,14 @@
       await originalRenderProjects.apply(this, args);
     }
     patchCards();
+      // Dynamically load UI tweaks script
+  (function() {
+    try {
+      const s = document.createElement('script');
+      s.src = 'patch-ui-tweaks.js';
+      document.body.appendChild(s);
+    } catch (e) { console.warn('load patch-ui-tweaks', e); }
+  })();
+    
   };
 })();
