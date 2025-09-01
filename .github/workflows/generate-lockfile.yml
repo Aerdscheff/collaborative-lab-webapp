@@ -1,10 +1,10 @@
 name: Generate package-lock.json (web)
 
 on:
-  workflow_dispatch: {}  # déclenchement manuel depuis l’onglet Actions
+  workflow_dispatch: {}
 
 permissions:
-  contents: write   # nécessaire pour pousser un commit
+  contents: write
 
 jobs:
   lockfile:
@@ -15,18 +15,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Use Node.js 20
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
 
-      - name: Generate package-lock.json (no scripts)
+      # Optionnel: réduire la verbosité et éviter des sorties inutiles
+      - name: NPM tweaks
+        run: |
+          npm config set fund false
+          npm config set audit false
+
+      - name: Install dependencies (create lockfile)
         working-directory: web
         run: |
-          npm install --package-lock-only --ignore-scripts
+          # Installe les deps pour générer package-lock.json
+          npm install
           test -f package-lock.json
 
-      - name: Commit if changed
+      - name: Commit lockfile if changed
         run: |
           if git diff --quiet -- web/package-lock.json; then
             echo "No changes to commit."
@@ -34,6 +42,6 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add web/package-lock.json
-            git commit -m "chore(web): generate package-lock.json for Netlify build"
+            git commit -m "chore(web): add package-lock.json for reproducible Netlify builds"
             git push origin HEAD:main
           fi
