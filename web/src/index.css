@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tokens rapides */
+.badge { @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs bg-sage text-pine; }
+.card  { @apply rounded-2xl shadow p-4 bg-sand; }
