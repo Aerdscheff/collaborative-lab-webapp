@@ -7,17 +7,13 @@
 
 :root {
   /* Palette inspirée de la terre et de la low‑tech */
-  --bg: #fff7fa;
-  --ink: #2f1d2e;
-  --muted: #b39298;
-    --earth: #e26d9b;
-  
-  ---clay: #f2b8c6;
-  --moss: #8eb6c0;
-  --sky: #f5d0e7;
-  
-  
-  
+  --bg: #fbfaf6;
+  --ink: #1c1a19;
+  --muted: #6a635c;
+  --earth: #8a6b4f;
+  --clay: #c48e6a;
+  --moss: #5e7a5a;
+  --sky: #7aa1b8;
   --ok: #2e7d32;
   --warn: #ef6c00;
   --err: #c62828;
