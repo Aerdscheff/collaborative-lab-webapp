@@ -1,18 +1,58 @@
-(function() {
-  const root = document.documentElement;
-  // Set color variables for new pink design
-  root.style.setProperty('--bg', '#FDF2F7');
-  root.style.setProperty('--ink', '#2F1D2E');
-  root.style.setProperty('--muted', '#C48CA5');
-  root.style.setProperty('--earth', '#E4578E');
-  root.style.setProperty('--clay', '#F5A2C1');
-  root.style.setProperty('--moss', '#FBD7E7');
-  root.style.setProperty('--sky', '#FDE6F4');
+// Helpers d’interface : fil d’Ariane, toasts, badges, montage des vues.
 
-  // Simple toast function for notifications
-  window.UI = {
-    toast: function(msg, type = 'info') {
-      alert(msg);
+(function(){
+  // Construit et affiche le fil d’Ariane à partir d’une liste d’items { label, href? }
+  function renderBreadcrumb(items) {
+    const ol = document.getElementById('breadcrumb');
+    if (!ol) return;
+    ol.innerHTML = '';
+    items.forEach((it, i) => {
+      const li = document.createElement('li');
+      if (it.href && i < items.length - 1) {
+        const a = document.createElement('a');
+        a.href = it.href;
+        a.textContent = it.label;
+        li.appendChild(a);
+      } else {
+        li.textContent = it.label;
+      }
+      ol.appendChild(li);
+    });
+  }
+
+  // Affiche un toast pendant quelques secondes
+  function toast(message, type = 'info') {
+    const wrap = document.getElementById('toast-container');
+    if (!wrap) return;
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.setAttribute('role', 'alert');
+    el.textContent = message;
+    wrap.appendChild(el);
+    setTimeout(() => {
+      el.remove();
+    }, 3000);
+  }
+
+  // Crée un badge d’état (synced/local/error)
+  function badge(state) {
+    const span = document.createElement('span');
+    span.className = `badge ${state}`;
+    span.textContent = state;
+    return span;
+  }
+
+  // Monte le nœud dans le conteneur #app et place le focus
+  function mount(node) {
+    const app = document.getElementById('app');
+    if (!app) return;
+    app.innerHTML = '';
+    app.appendChild(node);
+    // Accessibilité : replacer le focus dans le main
+    if (document.activeElement) {
+      app.focus();
     }
-  };
+  }
+
+  window.UI = { renderBreadcrumb, toast, badge, mount };
 })();
