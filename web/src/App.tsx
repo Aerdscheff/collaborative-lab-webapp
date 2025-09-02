@@ -1,5 +1,5 @@
 import React from 'react';
-import FichesList from './components/FichesList';
+import FichesList from './components/fichesList';
 
 export default function App() {
   return (
