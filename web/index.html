@@ -1,12 +1,31 @@
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Äerdschëff</title>
-  </head>
-  <body class="bg-sand text-pine">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <title>Collaborative Lab – Äerdschëff</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/web/css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">Ä</span>
+      <strong>Collaborative Lab</strong>
+    </div>
+    <nav class="nav">
+      <a href="#/">Accueil</a>
+      <a href="#/fiches">Fiches</a>
+      <a href="#/profil">Profil</a>
+      <a href="#/messages">Messagerie</a>
+    </nav>
+  </header>
+
+  <main id="app" class="wrap" aria-live="polite"></main>
+
+  <footer class="foot">
+    <small>Front monobloc (offline). Back/API, Supabase Auth, Sheets/Drive, EmailJS en cours de finalisation:contentReference[oaicite:6]{index=6}:contentReference[oaicite:7]{index=7}.</small>
+  </footer>
+
+  <script type="module" src="/web/js/app.js"></script>
+</body>
 </html>
