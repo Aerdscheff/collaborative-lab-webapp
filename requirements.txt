@@ -4,3 +4,5 @@ python-jose[cryptography]
 httpx
 pydantic
 email-validator
+
+gunicorn
