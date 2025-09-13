@@ -30,6 +30,7 @@ app.add_middleware(
 )
 
 
+
 @app.get("/health")
 async def health() -> dict[str, str]:
     """Simple health check endpoint.
@@ -46,3 +47,7 @@ app.include_router(profile.router)
 app.include_router(fiches.router)
 app.include_router(export.router)
 app.include_router(messages.router)
+
+@app.get("/")
+def root() -> dict[str, str]:
+    return {"message": "Collaborative Lab API active"}
