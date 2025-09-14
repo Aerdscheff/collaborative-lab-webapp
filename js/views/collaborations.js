@@ -1,0 +1,1 @@
+export function render(container) { container.innerHTML = '<h2>Collaborations (à venir)</h2>'; }
