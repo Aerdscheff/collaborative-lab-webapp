@@ -1,49 +1,28 @@
-// Gestion simple d’authentification et de rôle.
-//
-// Pour cette démonstration, l’authentification réelle (via Supabase) n’est pas implémentée.
-// On lit éventuellement un rôle stocké dans localStorage sous la clé `demoRole`.
 
-(function(){
-  const state = { user: null, role: 'user', onChange: [] };
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-  // Initialise l’état et met à jour le lien admin
-  function init() {
-    // Si un rôle est stocké localement, l’utiliser (utile pour tests)
-    const saved = localStorage.getItem('demoRole');
-    if (saved) state.role = saved;
-    updateAdminLink();
-    notify();
-  }
+const SUPABASE_URL = '<VOTRE_SUPABASE_URL>';
+const SUPABASE_ANON_KEY = '<VOTRE_SUPABASE_ANON_KEY>';
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // Met à jour la visibilité du lien admin dans la barre de navigation
-  function updateAdminLink() {
-    const link = document.getElementById('admin-link');
-    if (link) link.hidden = (state.role !== 'admin');
-  }
+export async function signIn(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  localStorage.setItem('jwt', data.session.access_token);
+  return data.user;
+}
 
-  // Renvoie le rôle actuel
-  function getRole() {
-    return state.role;
-  }
+export async function signUp(email, password) {
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) throw error;
+  return data.user;
+}
 
-  // Renvoie l’utilisateur (non utilisé ici)
-  function getUser() {
-    return state.user;
-  }
+export async function logout() {
+  await supabase.auth.signOut();
+  localStorage.removeItem('jwt');
+}
 
-  // Permet de s’abonner aux changements d’état
-  function onChange(cb) {
-    state.onChange.push(cb);
-  }
-
-  // Notifie les abonnés
-  function notify() {
-    state.onChange.forEach(cb => cb(state));
-  }
-
-  // Expose l’API globale
-  window.Auth = { init, updateAdminLink, getRole, getUser, onChange };
-
-  // Lancer l’initialisation immédiatement
-  init();
-})();
+export function getJWT() {
+  return localStorage.getItem('jwt');
+}
