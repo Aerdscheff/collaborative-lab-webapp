@@ -1,23 +1,24 @@
-// frontend_files/js/views/profiles.js
-// Profiles page view
-// Minimal placeholder to demonstrate profile section
 
-const Views_Profiles = (function () {
-  function render() {
-    UI.renderBreadcrumb([
-      { label: 'Accueil', href: '#/' },
-      { label: 'Mon profil' }
-    ]);
-    const container = document.createElement('div');
-    container.className = 'card';
+import { API } from '../api.js';
+
+export function render(container) {
+  API.getProfile().then(profile => {
     container.innerHTML = `
-      <h1>Mon profil</h1>
-      <p>Cette section sera dédiée à la gestion du profil utilisateur.</p>
-      <p>Les fonctionnalités de mise à jour et d'export du profil seront bientôt disponibles.</p>
+      <h2>Mon profil</h2>
+      <form id="profile-form">
+        <input type="text" name="display_name" value="${profile.display_name || ''}" placeholder="Nom affiché" />
+        <input type="text" name="role" value="${profile.role || ''}" placeholder="Rôle" readonly />
+        <button type="submit">Mettre à jour</button>
+      </form>
     `;
-    UI.mount(container);
-  }
-  return { render };
-})();
-
-export { Views_Profiles };
+    const form = document.getElementById('profile-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await API.updateProfile({ display_name: form.display_name.value });
+      alert('Profil mis à jour !');
+    });
+  }).catch(err => {
+    container.innerHTML = `<p>Erreur de chargement du profil</p>`;
+    console.error(err);
+  });
+}
