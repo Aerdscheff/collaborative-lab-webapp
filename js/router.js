@@ -26,12 +26,13 @@ authForm.addEventListener('submit', async (e) => {
   }
 });
 
-signupBtn.addEventListener('click', async () => {
+signupBtn.addEventListener('click', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('auth-email').value;
+  const password = document.getElementById('auth-password').value;
+
   try {
-    await signUp(
-      document.getElementById('auth-email').value,
-      document.getElementById('auth-password').value
-    );
+    await signUp(email, password);
     location.hash = '#/fiches';
   } catch (err) {
     document.getElementById('auth-error').textContent = err.message;
