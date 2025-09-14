@@ -1,44 +1,78 @@
-// Routeur hash‑based pour la SPA
 
-(function(){
-  // Définition des routes et des fonctions correspondantes
-  const routes = {
-    '/': () => window.Views_Home.render(),
-    '/fiches': () => window.Views_Fiches.list(),
-    '/fiches/create': () => window.Views_FichesCreate.render(),
-    '/collaborations': () => window.Views_Collaborations.render(),
-    '/messages': () => window.Views_Messages.render(),
-    '/admin': () => window.Views_Admin.render(),
-    '/profiles/me': () => window.Views_Profiles.me && window.Views_Profiles.me()
-  };
+import { getJWT, signIn, signUp, logout } from './auth.js';
+import { render as renderProfile } from './views/profiles.js';
+import { render as renderFiches } from './views/fiches.js';
+import { render as renderFicheCreate } from './views/fiches-create.js';
+import { render as renderMessages } from './views/messages.js';
+import { render as renderCollabs } from './views/collaborations.js';
+import { render as renderAdmin } from './views/admin.js';
 
-  // Analyse l’URL hash et renvoie chemin et query
-  function parseHash() {
-    const hash = location.hash.slice(1) || '/';
-    // Sépare la partie avant le ? (chemin) de la query
-    const [path] = hash.split('?');
-    return { path };
+const app = document.getElementById('app');
+const authForm = document.getElementById('auth-form');
+const signupBtn = document.getElementById('signup-btn');
+const logoutLink = document.getElementById('logout-link');
+const nav = document.getElementById('nav');
+
+authForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    await signIn(
+      document.getElementById('auth-email').value,
+      document.getElementById('auth-password').value
+    );
+    location.hash = '#/fiches';
+  } catch (err) {
+    document.getElementById('auth-error').textContent = err.message;
+  }
+});
+
+signupBtn.addEventListener('click', async () => {
+  try {
+    await signUp(
+      document.getElementById('auth-email').value,
+      document.getElementById('auth-password').value
+    );
+    location.hash = '#/fiches';
+  } catch (err) {
+    document.getElementById('auth-error').textContent = err.message;
+  }
+});
+
+logoutLink.addEventListener('click', () => {
+  logout();
+  nav.hidden = true;
+  document.getElementById('auth-container').hidden = false;
+});
+
+function router() {
+  const route = location.hash || '#/login';
+  if (!getJWT() && route !== '#/login') {
+    app.innerHTML = '';
+    document.getElementById('auth-container').hidden = false;
+    nav.hidden = true;
+    return;
   }
 
-  // Fonction de navigation
-  async function navigate() {
-    const { path } = parseHash();
-    // Vérifie l’admin
-    if (path === '/admin' && window.Auth.getRole && window.Auth.getRole() !== 'admin') {
-      UI.toast('Accès réservé aux administrateurs', 'error');
-      location.hash = '#/';
-      return;
-    }
-    const view = routes[path] || routes['/'];
-    view();
-  }
+  document.getElementById('auth-container').hidden = true;
+  nav.hidden = false;
 
-  // Initialisation : au chargement du DOM et à chaque changement de hash
-  window.addEventListener('hashchange', navigate);
-  window.addEventListener('DOMContentLoaded', () => {
-    if (window.Auth && window.Auth.init) {
-      window.Auth.init();
-    }
-    navigate();
-  });
-})();
+  switch (route) {
+    case '#/profiles':
+      renderProfile(app); break;
+    case '#/fiches':
+      renderFiches(app); break;
+    case '#/fiches/create':
+      renderFicheCreate(app); break;
+    case '#/messages':
+      renderMessages(app); break;
+    case '#/collaborations':
+      renderCollabs(app); break;
+    case '#/admin':
+      renderAdmin(app); break;
+    default:
+      app.innerHTML = '<h2>Bienvenue sur Ä Collaborative Lab</h2>';
+  }
+}
+
+window.addEventListener('hashchange', router);
+window.addEventListener('load', router);
