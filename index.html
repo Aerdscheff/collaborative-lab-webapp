@@ -2,44 +2,31 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Äerdschëff — Collaborative Lab</title>
-  <!-- Style principale -->
-  <link rel="stylesheet" href="/css/styles.css" />
+  <title>Ä Collaborative Lab</title>
+  <script type="module" src="./js/router.js"></script>
 </head>
 <body>
-  <!-- Barre de navigation principale -->
-  <header class="topbar">
-    <a class="brand" href="#/">Äerdschëff — Collaborative Lab</a>
-    <nav class="main-nav" aria-label="Navigation principale">
-      <a href="#/" data-link>Accueil</a>
-      <a href="#/fiches" data-link>Fiches</a>
-      <a href="#/collaborations" data-link>Collaborations</a>
-      <a href="#/messages" data-link>Messagerie</a>
-      <!-- Lien admin masqué par défaut, affiché côté JS si l'utilisateur est administrateur -->
-      <a href="#/admin" data-link id="admin-link" hidden>Administration</a>
-    </nav>
-  </header>
-  <!-- Fil d’Ariane rendu dynamiquement -->
-  <nav aria-label="Fil d’Ariane"><ol id="breadcrumb" class="breadcrumb"></ol></nav>
-  <!-- Conteneur principal pour les vues SPA -->
-  <main id="app" tabindex="-1" aria-live="polite"></main>
-  <!-- Conteneur pour les notifications toast -->
-  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+  <nav id="nav" hidden>
+    <a href="#/profiles">Profil</a>
+    <a href="#/fiches">Mes fiches</a>
+    <a href="#/fiches/create">Créer une fiche</a>
+    <a href="#/messages">Messagerie</a>
+    <a href="#/collaborations">Collaborations</a>
+    <a href="#/admin" id="admin-link" hidden>Admin</a>
+    <a href="#" id="logout-link" hidden>Déconnexion</a>
+  </nav>
 
-  <!-- Modules JS (ordre important) -->
-  <script src="/js/auth.js"></script>
-  <script src="/js/api.js"></script>
-  <script src="/js/ui.js"></script>
-  <script src="/js/accessibility.js"></script>
-  <script src="/js/router.js"></script>
-  <!-- Vues -->
-  <script src="/js/views/home.js"></script>
-  <script src="/js/views/profiles.js"></script>
-  <script src="/js/views/fiches.js"></script>
-  <script src="/js/views/fiches-create.js"></script>
-  <script src="/js/views/collaborations.js"></script>
-  <script src="/js/views/messages.js"></script>
-  <script src="/js/views/admin.js"></script>
+  <main id="app"></main>
+
+  <!-- Formulaire d’authentification -->
+  <div id="auth-container">
+    <form id="auth-form">
+      <input type="email" id="auth-email" name="email" placeholder="Email" required />
+      <input type="password" id="auth-password" name="password" placeholder="Mot de passe" required />
+      <button type="submit">Se connecter</button>
+      <button type="button" id="signup-btn">Créer un compte</button>
+    </form>
+    <div id="auth-error" role="alert"></div>
+  </div>
 </body>
 </html>
