@@ -1,4 +1,4 @@
-import { listFiches, createFiche, getProfile, saveProfile, listMessages, markAllRead } from "../api.js";
+import { listFiches, createFiche, getProfile, saveProfile, listMessages, markAllRead } from "./api.js";
 
 const $ = (sel) => document.querySelector(sel);
 const el = (tag, attrs={}, ...children) => {
