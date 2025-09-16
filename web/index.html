@@ -1,31 +1,35 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <title>Collaborative Lab – Äerdschëff</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="/web/css/style.css" />
+  <meta charset="UTF-8" />
+  <title>Ä Collaborative Lab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./css/style.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <span class="logo">Ä</span>
-      <strong>Collaborative Lab</strong>
-    </div>
-    <nav class="nav">
-      <a href="#/">Accueil</a>
-      <a href="#/fiches">Fiches</a>
-      <a href="#/profil">Profil</a>
-      <a href="#/messages">Messagerie</a>
-    </nav>
-  </header>
+  <nav id="nav" hidden>
+    <a href="#/profiles">Profil</a>
+    <a href="#/fiches">Mes fiches</a>
+    <a href="#/fiches/create">Créer une fiche</a>
+    <a href="#/messages">Messagerie</a>
+    <a href="#/collaborations">Collaborations</a>
+    <a href="#/admin" id="admin-link" hidden>Admin</a>
+    <a href="#" id="logout-link" hidden>Déconnexion</a>
+  </nav>
 
-  <main id="app" class="wrap" aria-live="polite"></main>
+  <main id="app"></main>
 
-  <footer class="foot">
-    <small>Front monobloc (offline). Back/API, Supabase Auth, Sheets/Drive, EmailJS en cours de finalisation:contentReference[oaicite:6]{index=6}:contentReference[oaicite:7]{index=7}.</small>
-  </footer>
+  <!-- Formulaire d’authentification -->
+  <div id="auth-container">
+    <form id="auth-form">
+      <input type="email" id="auth-email" name="email" placeholder="Email" required />
+      <input type="password" id="auth-password" name="password" placeholder="Mot de passe" required />
+      <button type="submit">Se connecter</button>
+      <button type="button" id="signup-btn">Créer un compte</button>
+    </form>
+  </div>
 
-<script type="module" src="./js/app.js"></script>
+  <!-- Entrypoint : router.js -->
+  <script type="module" src="./js/router.js"></script>
 </body>
 </html>
