@@ -11,11 +11,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 import os
 import httpx
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-import base64
-import json
 import logging
 
-from app.models import Profile
+from app.models import Profile, ProfileUpdate
 from app.database import get_supabase_client
 from app.email_service import send_welcome_email
 import asyncio
@@ -23,6 +21,23 @@ import asyncio
 router = APIRouter(tags=["profiles"])
 
 security = HTTPBearer()
+
+
+def _admin_whitelist() -> set[str]:
+    """Return the set of admin email addresses from the environment."""
+
+    admin_list = os.getenv("ADMIN_WHITELIST", "")
+    return {
+        email.strip().lower()
+        for email in admin_list.split(",")
+        if email and email.strip()
+    }
+
+
+def is_admin(email: str) -> bool:
+    """Check whether the provided email belongs to an admin user."""
+
+    return email.lower() in _admin_whitelist()
 
 
 async def get_current_user_email(
@@ -122,7 +137,7 @@ async def get_me_profile(email: str = Depends(get_current_user_email)) -> Profil
 
 @router.put("/me/profile", response_model=Profile)
 async def update_me_profile(
-    profile: Profile, email: str = Depends(get_current_user_email)
+    profile: ProfileUpdate, email: str = Depends(get_current_user_email)
 ) -> Profile:
     """Create or update the authenticated user's profile.
 
@@ -141,20 +156,33 @@ async def update_me_profile(
     if client is None:
         raise HTTPException(status_code=500, detail="Supabase client unavailable")
     # Force the email to match the authenticated user
-    data = profile.dict()
-    data["email"] = email
+    payload = profile.dict(exclude_unset=True)
+    payload["email"] = email
+    if len(payload) == 1:  # Only contains the email
+        raise HTTPException(status_code=400, detail="No profile fields provided")
     try:
         # Check if a profile already exists for this email
         existing = client.table("profiles").select("email").eq("email", email).execute()
         is_new = not existing.data
         # Upsert on the primary key (email)
-        response = client.table("profiles").upsert(data, on_conflict="email").execute()
+        client.table("profiles").upsert(payload, on_conflict="email").execute()
+        saved = (
+            client.table("profiles").select("*").eq("email", email).single().execute()
+        )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+    saved_profile = saved.data or {}
     # Send a welcome email asynchronously when a profile is created for the first time
     if is_new:
         try:
-            asyncio.create_task(send_welcome_email(to_email=email, to_name=profile.name))
+            asyncio.create_task(
+                send_welcome_email(
+                    to_email=email,
+                    to_name=saved_profile.get("subject"),
+                )
+            )
         except Exception:
             pass
-    return Profile(**data)
+    if not saved_profile:
+        saved_profile = payload
+    return Profile(**saved_profile)

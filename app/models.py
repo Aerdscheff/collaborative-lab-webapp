@@ -45,8 +45,21 @@ class Profile(BaseModel):
     preferences: Optional[str] = None
 
 
-class Fiche(BaseModel):
-    """Educational resource record.
+class FicheBase(BaseModel):
+    """Common fields shared by fiche payloads."""
+
+    title: str
+    period: str
+    modalities: str
+    levels: List[str]
+    pedagogy: List[str]
+    disciplines: List[str]
+    tags: List[str]
+    summary: str
+
+
+class Fiche(FicheBase):
+    """Educational resource record returned by the API.
 
     Fiches (learning sheets) can be created by teachers and matched
     across disciplines. Lists such as ``levels`` and ``disciplines``
@@ -56,16 +69,25 @@ class Fiche(BaseModel):
 
     id: Optional[str] = Field(None, description="Unique identifier (UUID)")
     owner: EmailStr = Field(..., description="Email of the fiche creator")
-    title: str
-    period: str
-    modalities: str
-    levels: List[str]
-    pedagogy: List[str]
-    disciplines: List[str]
-    tags: List[str]
-    summary: str
     createdAt: Optional[datetime] = None
     updatedAt: Optional[datetime] = None
+
+
+class FicheCreate(FicheBase):
+    """Payload required to create a fiche."""
+
+
+class FicheUpdate(BaseModel):
+    """Payload for partial updates of a fiche."""
+
+    title: Optional[str] = None
+    period: Optional[str] = None
+    modalities: Optional[str] = None
+    levels: Optional[List[str]] = None
+    pedagogy: Optional[List[str]] = None
+    disciplines: Optional[List[str]] = None
+    tags: Optional[List[str]] = None
+    summary: Optional[str] = None
 
 
 class Message(BaseModel):
@@ -84,3 +106,13 @@ class Message(BaseModel):
     content: str = Field(..., description="Body of the message")
     date: datetime = Field(..., description="Timestamp of when the message was sent")
     read: bool = Field(False, description="Indicates whether the message has been read")
+
+
+class ProfileUpdate(BaseModel):
+    """Partial payload for profile creation or update."""
+
+    subject: Optional[str] = None
+    classes: Optional[str] = None
+    sdgs: Optional[str] = None
+    bio: Optional[str] = None
+    preferences: Optional[str] = None
