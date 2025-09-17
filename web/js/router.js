@@ -15,16 +15,22 @@ const nav = document.getElementById('nav');
 
 authForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+  console.log("Formulaire soumis");
   try {
-    await signIn(
-      document.getElementById('auth-email').value,
-      document.getElementById('auth-password').value
-    );
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    console.log("Tentative login avec", email);
+
+    await signIn(email, password);
+
+    console.log("Connexion réussie, redirection…");
     location.hash = '#/fiches';
   } catch (err) {
+    console.error("Erreur d’auth :", err);
     document.getElementById('auth-error').textContent = err.message;
   }
 });
+
 
 signupBtn.addEventListener('click', async (e) => {
   e.preventDefault();
