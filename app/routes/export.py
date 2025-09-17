@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.database import get_supabase_client
 from app.google_api import upload_json_to_drive
-from .profile import get_current_user_email  # to ensure authentication exists
+from .profile import get_current_user_email, is_admin  # to ensure authentication exists
 
 router = APIRouter(tags=["export"])
 
@@ -20,9 +20,9 @@ router = APIRouter(tags=["export"])
 async def export_json(email: str = Depends(get_current_user_email)) -> dict:
     """Export all tables from the database as a JSON object.
 
-    Only users with the ``admin`` role should be allowed to call this
-    endpoint. Role checking is not implemented here and should be
-    enforced in production.
+    Only users with the ``admin`` role may call this endpoint. The
+    whitelist is configured via the ``ADMIN_WHITELIST`` environment
+    variable and validated using the shared authentication helpers.
 
     Args:
         email: Injected email of the current user.
@@ -30,6 +30,9 @@ async def export_json(email: str = Depends(get_current_user_email)) -> dict:
     Returns:
         dict: A dictionary containing lists of rows for each table.
     """
+    if not is_admin(email):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+
     client = get_supabase_client()
     if client is None:
         raise HTTPException(status_code=500, detail="Supabase client unavailable")
