@@ -1,41 +1,72 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { createClient } from '@supabase/supabase-js';
 
-// ⚠️ Ces variables seront injectées au build par Vite
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Récupération des variables d'environnement
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Initialisation du client Supabase
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Connexion avec email / mot de passe
-export async function signIn(email, password) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw error;
-  localStorage.setItem('jwt', data.session.access_token);
-  return data.user;
+// Vérification de configuration
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error(
+    "[auth] Variables d'environnement manquantes : VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY."
+  );
 }
 
-// Création de compte
-export async function signUp(email, password) {
-  const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) throw error;
-  return data.user;
-}
-const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-if (error) {
-  console.error('[login] Échec de connexion', error);
-  const feedback = document.getElementById('auth-feedback');
-  if (feedback) feedback.textContent = error.message || "Identifiants incorrects.";
-  return;
+// === Fonctions d'authentification ===
+
+/**
+ * Connexion avec email + mot de passe
+ */
+export async function login(email, password) {
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error('[auth] Échec de connexion', err);
+    throw err;
+  }
 }
 
-// Déconnexion
+/**
+ * Inscription avec email + mot de passe
+ */
+export async function signup(email, password) {
+  try {
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error('[auth] Échec inscription', err);
+    throw err;
+  }
+}
+
+/**
+ * Déconnexion
+ */
 export async function logout() {
-  await supabase.auth.signOut();
-  localStorage.removeItem('jwt');
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  } catch (err) {
+    console.error('[auth] Échec déconnexion', err);
+    throw err;
+  }
 }
 
-// Récupération du token JWT
-export function getJWT() {
-  return localStorage.getItem('jwt');
+/**
+ * Obtenir la session courante
+ */
+export async function getSession() {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    return data.session;
+  } catch (err) {
+    console.error('[auth] Impossible de récupérer la session', err);
+    return null;
+  }
 }
