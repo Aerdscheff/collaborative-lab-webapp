@@ -12,9 +12,7 @@ export async function render(app, userId) {
           <p class="text-sm text-gray-500">Chargement en cours...</p>
         </div>
       </div>
-      <div id="profile-content" class="space-y-4">
-        <!-- contenu profil -->
-      </div>
+      <div id="profile-content" class="space-y-4"></div>
       <div class="mt-6">
         <button id="edit-profile" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
           Modifier le profil
@@ -55,11 +53,11 @@ export async function render(app, userId) {
     `;
   }
 
-  // Action "modifier profil"
+  // Redirection vers la vue édition
   const editBtn = app.querySelector('#edit-profile');
   if (editBtn) {
     editBtn.addEventListener('click', () => {
-      alert('TODO: ouvrir un formulaire d’édition du profil');
+      window.location.hash = '#/profiles/edit';
     });
   }
 }
