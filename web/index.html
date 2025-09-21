@@ -1,35 +1,32 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <title>Ä Collaborative Lab</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="./css/style.css" />
-</head>
-<body>
-  <nav id="nav" hidden>
-    <a href="#/profiles">Profil</a>
-    <a href="#/fiches">Mes fiches</a>
-    <a href="#/fiches/create">Créer une fiche</a>
-    <a href="#/messages">Messagerie</a>
-    <a href="#/collaborations">Collaborations</a>
-    <a href="#/admin" id="admin-link" hidden>Admin</a>
-    <a href="#" id="logout-link" hidden>Déconnexion</a>
-  </nav>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Collaborative Lab</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
+    <!-- Header -->
+    <header id="header"></header>
 
-  <main id="app"></main>
+    <!-- Contenu principal -->
+    <main id="app" class="flex-1 container mx-auto px-4 py-6">
+      <!-- Ici le router injecte les vues -->
+    </main>
 
-  <!-- Formulaire d’authentification -->
-  <div id="auth-container">
-    <form id="auth-form">
-      <input type="email" id="auth-email" name="email" placeholder="Email" required />
-      <input type="password" id="auth-password" name="password" placeholder="Mot de passe" required />
-      <button type="submit">Se connecter</button>
-      <button type="button" id="signup-btn">Créer un compte</button>
-    </form>
-  </div>
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white text-center py-3">
+      <p class="text-sm">
+        © 2025 Collaborative Lab – Äerdschëff ·
+        <a href="https://aerdscheff.lu" class="underline hover:text-gray-300">
+          Site officiel
+        </a>
+      </p>
+    </footer>
 
-  <!-- Entrypoint : router.js -->
-  <script type="module" src="./js/router.js"></script>
-</body>
+    <!-- Scripts -->
+    <script type="module" src="/js/router.js"></script>
+  </body>
 </html>
