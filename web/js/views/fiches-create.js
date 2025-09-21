@@ -3,7 +3,6 @@ import { API } from '../api.js';
 import { showFeedback } from '../utils/feedback.js';
 
 export async function render(app) {
-  // Récupérer l’ID de fiche si présent dans l’URL (#/fiches/create?id=123)
   const params = new URLSearchParams(window.location.hash.split('?')[1]);
   const ficheId = params.get('id');
 
@@ -20,7 +19,7 @@ export async function render(app) {
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700">Résumé</label>
-          <textarea name="resume" rows="3" class="mt-1 block w-full border rounded px-3 py-2" required></textarea>
+          <textarea name="summary" rows="3" class="mt-1 block w-full border rounded px-3 py-2" required></textarea>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700">Contenu</label>
@@ -37,23 +36,31 @@ export async function render(app) {
           </button>
         </div>
       </form>
+      <div id="fiche-messages-link" class="mt-6"></div>
     </section>
   `;
 
   const form = app.querySelector('#fiche-form');
   const feedback = app.querySelector('#fiche-feedback');
   const cancelBtn = app.querySelector('#cancel-fiche');
+  const linkContainer = app.querySelector('#fiche-messages-link');
 
-  // Si édition → préremplir
+  // Préremplir si mode édition
   if (ficheId) {
     try {
       showFeedback(feedback, 'info', 'Chargement de la fiche…');
       const fiche = await API.get(ficheId);
       if (fiche) {
         form.title.value = fiche.title || '';
-        form.resume.value = fiche.resume || '';
+        form.summary.value = fiche.summary || '';
         form.content.value = fiche.content || '';
         feedback.innerHTML = '';
+        linkContainer.innerHTML = `
+          <a href="#/fiches/${ficheId}/messages"
+             class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">
+            💬 Voir les messages liés
+          </a>
+        `;
       } else {
         showFeedback(feedback, 'error', 'Fiche introuvable.');
       }
@@ -63,14 +70,14 @@ export async function render(app) {
     }
   }
 
-  // Soumission du formulaire
+  // Soumission formulaire
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     showFeedback(feedback, 'info', ficheId ? 'Mise à jour…' : 'Création…');
 
     const payload = {
       title: form.title.value.trim(),
-      resume: form.resume.value.trim(),
+      summary: form.summary.value.trim(),
       content: form.content.value.trim(),
       updated_at: new Date().toISOString()
     };
@@ -79,14 +86,23 @@ export async function render(app) {
       if (ficheId) {
         await API.update(ficheId, payload);
         showFeedback(feedback, 'success', 'Fiche mise à jour avec succès ✅');
+        linkContainer.innerHTML = `
+          <a href="#/fiches/${ficheId}/messages"
+             class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">
+            💬 Voir les messages liés
+          </a>
+        `;
       } else {
-        await API.create(payload);
+        const res = await API.create(payload);
+        const newId = res.id;
         showFeedback(feedback, 'success', 'Fiche créée avec succès ✅');
-        form.reset();
+        linkContainer.innerHTML = `
+          <a href="#/fiches/${newId}/messages"
+             class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">
+            💬 Voir les messages liés
+          </a>
+        `;
       }
-      setTimeout(() => {
-        window.location.hash = '#/fiches';
-      }, 1000);
     } catch (err) {
       console.error('[fiches-create] Erreur save', err);
       showFeedback(feedback, 'error', err.message || 'Impossible d’enregistrer la fiche.');
