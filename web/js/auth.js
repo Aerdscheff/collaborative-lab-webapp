@@ -21,6 +21,13 @@ export async function signUp(email, password) {
   if (error) throw error;
   return data.user;
 }
+const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+if (error) {
+  console.error('[login] Échec de connexion', error);
+  const feedback = document.getElementById('auth-feedback');
+  if (feedback) feedback.textContent = error.message || "Identifiants incorrects.";
+  return;
+}
 
 // Déconnexion
 export async function logout() {
