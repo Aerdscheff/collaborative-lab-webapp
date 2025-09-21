@@ -70,7 +70,26 @@ export async function getSession() {
     return null;
   }
 }
-// Aliases pour compatibilité avec router.js
+
+/**
+ * Récupérer le profil utilisateur depuis la table "profiles"
+ */
+export async function getProfile(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error('[auth] Erreur getProfile', err);
+    return null;
+  }
+}
+
+// === Aliases pour compatibilité avec router.js ===
 export const signIn = login;
 export const signUp = signup;
 export async function getJWT() {
