@@ -7,10 +7,11 @@ import { render as renderMessages } from './views/messages.js';
 import { render as renderCollabs } from './views/collaborations.js';
 import { render as renderAdmin } from './views/admin.js';
 import { render as renderResetPassword } from './views/reset-password.js';
+import { render as renderFicheDetail } from './views/fiche-detail.js';
 import { showFeedback } from './utils/feedback.js';
 
 const app = document.getElementById('app');
-// ... tes autres const (authForm, signupBtn, etc.)
+// Ici tu peux garder tes autres const (authForm, signupBtn, etc.)
 
 // --- Router principal ---
 async function router() {
@@ -24,7 +25,7 @@ async function router() {
   }
 
   if (hash === '#/login') {
-    app.innerHTML = '<p>Page de connexion</p>'; // ta logique existante
+    app.innerHTML = '<p>Page de connexion</p>'; // ta logique login existante
     return;
   }
 
@@ -51,6 +52,12 @@ async function router() {
       // Extrait l’ID de la fiche depuis l’URL
       const ficheId = hash.match(/^#\/fiches\/([^/]+)\/messages$/)[1];
       renderMessages(app, ficheId);
+      break;
+    }
+    case /^#\/fiches\/([^/]+)$/.test(hash): {
+      // Route détail d’une fiche
+      const ficheId = hash.match(/^#\/fiches\/([^/]+)$/)[1];
+      renderFicheDetail(app, ficheId);
       break;
     }
     case hash === '#/collaborations':
