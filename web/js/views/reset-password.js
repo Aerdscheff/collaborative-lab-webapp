@@ -36,16 +36,17 @@ function showFeedback(container, message) {
   container.textContent = message;
 }
 
-async function prepareRecoverySession() {
-  try {
-    // Tente de récupérer une session depuis l’URL (token de recovery)
-    const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
-    if (error) throw error;
-    return data?.session || null;
-  } catch (err) {
-    console.warn('[reset-password] Session de recovery non trouvée', err);
-    return null;
-  }
+// Parse les tokens de l’URL (hash après #)
+function parseHashParams() {
+  const hash = window.location.hash.substring(1); // enlève le "#"
+  const urlParams = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : hash);
+  return {
+    access_token: urlParams.get('access_token'),
+    refresh_token: urlParams.get('refresh_token'),
+    type: urlParams.get('type'),
+    error: urlParams.get('error'),
+    error_description: urlParams.get('error_description')
+  };
 }
 
 export function render(app) {
@@ -59,20 +60,40 @@ export function render(app) {
   const feedbackContainer = section.querySelector('.reset-password__feedback');
 
   setFormDisabled(form, true);
-  showFeedback(feedbackContainer, 'Validation du lien de récupération en cours…');
+  showFeedback(feedbackContainer, 'Validation du lien de récupération…');
 
   (async () => {
-    const session = await prepareRecoverySession();
-    if (!session) {
+    const { access_token, refresh_token, type, error, error_description } = parseHashParams();
+
+    if (error) {
       showFeedback(feedbackContainer, '');
-      showError(errorContainer, 'Lien invalide ou expiré. Veuillez redemander un email de réinitialisation.');
+      showError(errorContainer, decodeURIComponent(error_description || 'Lien invalide ou expiré.'));
       return;
     }
 
-    // Lien valide → on autorise le formulaire
-    showFeedback(feedbackContainer, '');
-    setFormDisabled(form, false);
-    passwordInput.focus();
+    if (type !== 'recovery' || !access_token || !refresh_token) {
+      showFeedback(feedbackContainer, '');
+      showError(errorContainer, 'Lien de récupération invalide ou incomplet.');
+      return;
+    }
+
+    try {
+      const { data, error: setError } = await supabase.auth.setSession({
+        access_token,
+        refresh_token
+      });
+      if (setError) throw setError;
+
+      console.log('[reset-password] Session recovery établie', data.session);
+
+      showFeedback(feedbackContainer, '');
+      setFormDisabled(form, false);
+      passwordInput.focus();
+    } catch (err) {
+      console.error('[reset-password] setSession error', err);
+      showFeedback(feedbackContainer, '');
+      showError(errorContainer, 'Impossible de valider le lien de récupération. Veuillez en demander un nouveau.');
+    }
   })();
 
   form.addEventListener('submit', async (event) => {
@@ -104,9 +125,9 @@ export function render(app) {
 
       setTimeout(() => {
         window.location.hash = '#/login';
-      }, 800);
+      }, 1000);
     } catch (err) {
-      console.error('[reset-password] Erreur updateUser', err);
+      console.error('[reset-password] updateUser error', err);
       showFeedback(feedbackContainer, '');
       showError(errorContainer, err.message || "Impossible de mettre à jour le mot de passe.");
       setFormDisabled(form, false);
