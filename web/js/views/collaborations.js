@@ -13,37 +13,44 @@ export async function render(app) {
   const feedback = app.querySelector('#collab-feedback');
   const list = app.querySelector('#collab-list');
 
-  async function loadSuggestions() {
+  async function loadCollaborations() {
     try {
-      showFeedback(feedback, 'info', 'Recherche de suggestions…');
+      showFeedback(feedback, 'info', 'Chargement des collaborations…');
+
+      // Récupérer les collaborations + la fiche liée
       const { data, error } = await supabase
-        .from('fiches')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .from('collaborations')
+        .select(`
+          id,
+          fiche_id,
+          status,
+          created_at,
+          fiches (title)
+        `)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       feedback.innerHTML = '';
 
       if (!data || data.length === 0) {
-        list.innerHTML = `<p class="text-gray-500">Aucune fiche compatible trouvée pour le moment.</p>`;
+        list.innerHTML = `<p class="text-gray-500">Aucune collaboration trouvée.</p>`;
         return;
       }
 
       list.innerHTML = data
         .map(
-          (fiche) => `
+          (c) => `
           <div class="border rounded p-4 shadow-sm">
-            <h3 class="text-lg font-medium">${fiche.title || 'Sans titre'}</h3>
-            <p class="text-sm text-gray-600 mb-2">${fiche.resume || ''}</p>
-            <div class="flex space-x-2 mt-2">
-              <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded accept-collab"
-                      data-id="${fiche.id}">
+            <h3 class="text-lg font-medium">${c.fiches?.title || 'Fiche inconnue'}</h3>
+            <p class="text-sm text-gray-500 mb-2">Statut : <strong>${c.status}</strong></p>
+            <div class="flex space-x-2">
+              <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded accept-btn"
+                      data-id="${c.id}">
                 ✅ Accepter
               </button>
-              <button class="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded skip-collab"
-                      data-id="${fiche.id}">
-                ❌ Passer
+              <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded reject-btn"
+                      data-id="${c.id}">
+                ❌ Rejeter
               </button>
             </div>
           </div>
@@ -51,16 +58,17 @@ export async function render(app) {
         )
         .join('');
 
-      // Boutons Accepter
-      list.querySelectorAll('.accept-collab').forEach((btn) => {
+      // Boutons accepter
+      list.querySelectorAll('.accept-btn').forEach((btn) => {
         btn.addEventListener('click', async () => {
           try {
-            await supabase.from('collaborations').insert({
-              fiche_id: btn.dataset.id,
-              status: 'accepted',
-              created_at: new Date().toISOString()
-            });
+            const { error } = await supabase
+              .from('collaborations')
+              .update({ status: 'accepted' })
+              .eq('id', btn.dataset.id);
+            if (error) throw error;
             showFeedback(feedback, 'success', 'Collaboration acceptée ✅');
+            loadCollaborations();
           } catch (err) {
             console.error('[collab] Erreur acceptation', err);
             showFeedback(feedback, 'error', 'Impossible d’accepter la collaboration.');
@@ -68,11 +76,21 @@ export async function render(app) {
         });
       });
 
-      // Boutons Passer
-      list.querySelectorAll('.skip-collab').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          showFeedback(feedback, 'info', 'Collaboration ignorée ❌');
-          btn.closest('div.border').remove();
+      // Boutons rejeter
+      list.querySelectorAll('.reject-btn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          try {
+            const { error } = await supabase
+              .from('collaborations')
+              .update({ status: 'rejected' })
+              .eq('id', btn.dataset.id);
+            if (error) throw error;
+            showFeedback(feedback, 'success', 'Collaboration rejetée ❌');
+            loadCollaborations();
+          } catch (err) {
+            console.error('[collab] Erreur rejet', err);
+            showFeedback(feedback, 'error', 'Impossible de rejeter la collaboration.');
+          }
         });
       });
     } catch (err) {
@@ -81,5 +99,5 @@ export async function render(app) {
     }
   }
 
-  loadSuggestions();
+  loadCollaborations();
 }
