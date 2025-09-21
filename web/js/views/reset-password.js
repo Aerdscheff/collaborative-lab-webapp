@@ -53,11 +53,39 @@ async function getCurrentSession() {
     if (error) throw error;
     return data?.session || null;
   } catch (err) {
-    console.warn('[reset-password] Lecture session courante impossible', err);
+    console.warn('[reset-password] Lecture session impossible', err);
     return null;
   }
 }
 
 async function trySessionFromUrl() {
   try {
-    const { data, error } = await supabase.auth.getSessionFromUrl({
+    const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
+    if (error) throw error;
+    return data?.session || null;
+  } catch (err) {
+    console.warn('[reset-password] getSessionFromUrl a échoué', err);
+    return null;
+  }
+}
+
+// === Vue exportée ===
+export function render(app) {
+  app.innerHTML = renderTemplate();
+
+  const section = app.querySelector('.reset-password');
+  const form = section.querySelector('form');
+  const errorContainer = section.querySelector('.reset-password__error');
+  const feedbackContainer = section.querySelector('.reset-password__feedback');
+
+  // Exemple minimal : ne fait que préparer la session
+  (async () => {
+    const session = await getCurrentSession() || await trySessionFromUrl();
+    if (!session) {
+      showError(errorContainer, 'Lien invalide ou expiré.');
+      return;
+    }
+    showFeedback(feedbackContainer, 'Session valide, vous pouvez changer votre mot de passe.');
+    setFormDisabled(form, false);
+  })();
+}
