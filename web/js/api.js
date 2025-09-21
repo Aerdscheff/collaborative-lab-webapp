@@ -1,7 +1,25 @@
 import { supabase } from './auth.js';
 
 /**
- * Fiches
+ * Récupérer un profil utilisateur
+ */
+export async function getProfile(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error('[api] getProfile error', err);
+    return null;
+  }
+}
+
+/**
+ * Récupérer toutes les fiches
  */
 export async function getFiches({ q = '', status = '', limit = 20, offset = 0 } = {}) {
   try {
@@ -24,70 +42,40 @@ export async function getFiches({ q = '', status = '', limit = 20, offset = 0 } 
 }
 
 /**
- * Profil utilisateur
- */
-export async function getProfile(userId) {
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    if (error) throw error;
-    return data;
-  } catch (err) {
-    console.error('[api] getProfile error', err);
-    return null;
-  }
-}
-
-/**
- * API Fiches CRUD (branchée sur Supabase)
+ * API objet pour compatibilité
  */
 export const API = {
   list: getFiches,
   get: async (id) => {
-    try {
-      const { data, error } = await supabase.from('fiches').select('*').eq('id', id).single();
-      if (error) throw error;
-      return data;
-    } catch (err) {
-      console.error('[api] get fiche error', err);
+    const { data, error } = await supabase.from('fiches').select('*').eq('id', id).single();
+    if (error) {
+      console.error('[api] get fiche error', error);
       return null;
     }
+    return data;
   },
   create: async (payload) => {
-    try {
-      const { data, error } = await supabase.from('fiches').insert(payload).select('id').single();
-      if (error) throw error;
-      return { id: data.id };
-    } catch (err) {
-      console.error('[api] create fiche error', err);
+    const { data, error } = await supabase.from('fiches').insert(payload).select('id').single();
+    if (error) {
+      console.error('[api] create fiche error', error);
       return null;
     }
+    return { id: data.id };
   },
   update: async (id, payload) => {
-    try {
-      const { error } = await supabase.from('fiches').update(payload).eq('id', id);
-      if (error) throw error;
-      return { id };
-    } catch (err) {
-      console.error('[api] update fiche error', err);
+    const { error } = await supabase.from('fiches').update(payload).eq('id', id);
+    if (error) {
+      console.error('[api] update fiche error', error);
       return null;
     }
+    return { id };
   },
   remove: async (id) => {
-    try {
-      const { error } = await supabase.from('fiches').delete().eq('id', id);
-      if (error) throw error;
-      return { id };
-    } catch (err) {
-      console.error('[api] remove fiche error', err);
+    const { error } = await supabase.from('fiches').delete().eq('id', id);
+    if (error) {
+      console.error('[api] remove fiche error', error);
       return null;
     }
-  },
-  export: async (id, format) => {
-    // TODO : implémenter export (ex. JSON, DOCX)
-    return Promise.resolve({ ok: true });
+    return { id };
   }
 };
