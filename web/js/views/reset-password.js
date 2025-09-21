@@ -59,15 +59,23 @@ async function getCurrentSession() {
 }
 
 async function trySessionFromUrl() {
-  try {
-    const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
-    if (error) throw error;
-    return data?.session || null;
-  } catch (err) {
-    console.warn('[reset-password] getSessionFromUrl a échoué', err);
-    return null;
-  }
+try {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
+
+  clearStoredRecoveryTokens();
+  persistAuthFeedback('Mot de passe mis à jour avec succès. Vous pouvez vous reconnecter.');
+  await supabase.auth.signOut();
+  showFeedback(feedbackContainer, 'Mot de passe mis à jour. Redirection en cours…');
+  setTimeout(() => {
+    window.location.hash = '#/login';
+  }, 400);
+} catch (err) {
+  console.error('[reset-password] Échec updateUser', err);
+  showError(errorContainer, err.message || "Impossible de mettre à jour le mot de passe.");
+  setFormDisabled(form, false);
 }
+
 
 // === Vue exportée ===
 export function render(app) {
