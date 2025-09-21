@@ -36,7 +36,7 @@ export async function render(app) {
         <div class="border rounded p-4 shadow-sm">
           <h3 class="text-lg font-medium">${fiche.title || 'Sans titre'}</h3>
           <p class="text-sm text-gray-600 mb-2">${fiche.summary || ''}</p>
-          <div class="flex space-x-2 mt-2">
+          <div class="flex flex-wrap gap-2 mt-2">
             <button class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded edit-fiche"
                     data-id="${fiche.id}">
               ✏️ Modifier
@@ -45,6 +45,10 @@ export async function render(app) {
                     data-id="${fiche.id}">
               🗑 Supprimer
             </button>
+            <a href="#/fiches/${fiche.id}"
+               class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded">
+              👀 Voir la fiche
+            </a>
             <a href="#/fiches/${fiche.id}/messages"
                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded">
               💬 Voir les messages
