@@ -1,5 +1,6 @@
 import { supabase } from '../auth.js';
 import { getProfile } from '../api.js';
+import { showFeedback } from '../utils/feedback.js';
 
 export async function render(app, userId) {
   app.innerHTML = `
@@ -29,7 +30,7 @@ export async function render(app, userId) {
           </button>
         </div>
       </form>
-      <p id="profile-feedback" class="mt-4 text-sm text-gray-500"></p>
+      <div id="profile-feedback" class="mt-4"></div>
     </section>
   `;
 
@@ -47,16 +48,13 @@ export async function render(app, userId) {
     }
   } catch (err) {
     console.error('[profile-edit] Erreur chargement profil', err);
-    feedback.textContent = "Impossible de charger vos informations.";
-    feedback.classList.add('text-red-500');
+    showFeedback(feedback, 'error', "Impossible de charger vos informations.");
   }
 
   // Soumission du formulaire
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    feedback.textContent = "Enregistrement...";
-    feedback.classList.remove('text-red-500');
-    feedback.classList.add('text-gray-500');
+    showFeedback(feedback, 'info', 'Enregistrement en cours...');
 
     const payload = {
       name: form.name.value.trim(),
@@ -67,14 +65,10 @@ export async function render(app, userId) {
       const { error } = await supabase.from('profiles').update(payload).eq('id', userId);
       if (error) throw error;
 
-      feedback.textContent = "Profil mis à jour avec succès ✅";
-      feedback.classList.remove('text-gray-500');
-      feedback.classList.add('text-green-600');
+      showFeedback(feedback, 'success', 'Profil mis à jour avec succès ✅');
     } catch (err) {
       console.error('[profile-edit] Erreur update profil', err);
-      feedback.textContent = err.message || "Impossible de mettre à jour le profil.";
-      feedback.classList.remove('text-gray-500');
-      feedback.classList.add('text-red-500');
+      showFeedback(feedback, 'error', err.message || "Impossible de mettre à jour le profil.");
     }
   });
 
