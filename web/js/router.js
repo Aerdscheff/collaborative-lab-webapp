@@ -1,5 +1,6 @@
 import { getJWT, signIn, signUp, logout, supabase } from './auth.js';
-import { render as renderProfile } from './views/profiles.js';
+import { render as renderProfile } from './views/profile.js';
+import { render as renderProfileEdit } from './views/profile-edit.js';
 import { render as renderFiches } from './views/fiches.js';
 import { render as renderFicheCreate } from './views/fiches-create.js';
 import { render as renderMessages } from './views/messages.js';
@@ -20,7 +21,6 @@ const authContainer = document.getElementById('auth-container');
 function updateAuthMessages({ error = '', feedback = '' }) {
   const errorEl = document.getElementById('auth-error');
   const feedbackEl = document.getElementById('auth-feedback');
-
   if (errorEl) errorEl.textContent = error || '';
   if (feedbackEl) feedbackEl.textContent = feedback || '';
 }
@@ -67,26 +67,9 @@ if (logoutLink) {
 
 // --- Gestion des routes ---
 function normalizeRoute() {
-  const { hash, pathname, search } = window.location;
+  const { hash } = window.location;
 
-  // Cas 1 : lien avec double-hash "#/reset-password#access_token=..."
-  if (hash.startsWith('#/reset-password#')) {
-    const fragment = hash.slice('#/reset-password#'.length);
-    if (fragment.includes('access_token') && fragment.includes('type=recovery')) {
-      const baseUrl = `${window.location.origin}${window.location.pathname}`;
-      const newUrl = `${baseUrl}#/reset-password?${fragment}`;
-      console.log('[router] Conversion double-hash en query string :', newUrl);
-      window.history.replaceState(null, '', newUrl);
-      return `#/reset-password?${fragment}`;
-    }
-  }
-
-  // Cas 2 : lien déjà en query string
-  if (pathname.endsWith('/reset-password')) {
-    return `#/reset-password${search || ''}`;
-  }
-
-  // Cas 3 : hash normal
+  // Cas : lien de reset avec access_token et refresh_token dans l’URL
   if (hash.startsWith('#/reset-password')) {
     return hash;
   }
@@ -94,19 +77,22 @@ function normalizeRoute() {
   return hash || '#/login';
 }
 
-// --- Capture session Supabase ---
+// --- Capture session de recovery Supabase (v2 : setSession à la place de getSessionFromUrl) ---
 async function captureSupabaseRecoverySession() {
   const route = normalizeRoute();
   if (route.startsWith('#/reset-password?')) {
     try {
-      console.log('[router] Tentative capture session via getSessionFromUrl');
-      const { error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
-      if (error) throw error;
-      console.log('[router] Session Supabase capturée');
+      console.log('[router] Tentative capture session via setSession (Supabase v2)');
+      const urlParams = new URLSearchParams(route.split('?')[1]);
+      const access_token = urlParams.get('access_token');
+      const refresh_token = urlParams.get('refresh_token');
+      const type = urlParams.get('type');
 
-      // Nettoyer l’URL
-      const cleanUrl = `${window.location.origin}${window.location.pathname}#/reset-password`;
-      window.history.replaceState(null, '', cleanUrl);
+      if (type === 'recovery' && access_token && refresh_token) {
+        const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+        if (error) throw error;
+        console.log('[router] Session Supabase capturée');
+      }
     } catch (err) {
       console.error('[router] Erreur capture session Supabase', err);
       updateAuthMessages({ error: err.message || 'Lien invalide ou expiré.', feedback: '' });
@@ -161,6 +147,8 @@ async function router() {
   switch (route) {
     case '#/profiles':
       renderProfile(app); break;
+    case '#/profiles/edit':
+      renderProfileEdit(app); break;
     case '#/fiches':
       renderFiches(app); break;
     case '#/fiches/create':
@@ -172,7 +160,7 @@ async function router() {
     case '#/admin':
       renderAdmin(app); break;
     default:
-      app.innerHTML = '<h2>Bienvenue sur Ä Collaborative Lab</h2>';
+      app.innerHTML = '<h2 class="text-center text-lg mt-10">Bienvenue sur Ä Collaborative Lab</h2>';
   }
 }
 
