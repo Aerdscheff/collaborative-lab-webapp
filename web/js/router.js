@@ -7,6 +7,7 @@ import { render as renderMessages } from './views/messages.js';
 import { render as renderCollabs } from './views/collaborations.js';
 import { render as renderAdmin } from './views/admin.js';
 import { render as renderResetPassword } from './views/reset-password.js';
+import { showFeedback } from './utils/feedback.js';
 
 const AUTH_FEEDBACK_STORAGE_KEY = 'authPendingFeedback';
 
@@ -16,14 +17,7 @@ const signupBtn = document.getElementById('signup-btn');
 const logoutLink = document.getElementById('logout-link');
 const nav = document.getElementById('nav');
 const authContainer = document.getElementById('auth-container');
-
-// --- Messages d'auth ---
-function updateAuthMessages({ error = '', feedback = '' }) {
-  const errorEl = document.getElementById('auth-error');
-  const feedbackEl = document.getElementById('auth-feedback');
-  if (errorEl) errorEl.textContent = error || '';
-  if (feedbackEl) feedbackEl.textContent = feedback || '';
-}
+const feedbackEl = document.getElementById('auth-feedback');
 
 // --- Formulaires login/signup ---
 if (authForm) {
@@ -32,11 +26,11 @@ if (authForm) {
     try {
       const email = document.getElementById('auth-email').value;
       const password = document.getElementById('auth-password').value;
-      await signIn(email, password);
-      updateAuthMessages({ error: '', feedback: 'Connexion réussie, redirection…' });
+      await signIn(email, password, feedbackEl);
+      sessionStorage.setItem(AUTH_FEEDBACK_STORAGE_KEY, 'Connexion réussie ✅');
       location.hash = '#/fiches';
     } catch (err) {
-      updateAuthMessages({ error: err.message || 'Authentification impossible.', feedback: '' });
+      // signIn affiche déjà le feedback
     }
   });
 }
@@ -47,21 +41,27 @@ if (signupBtn) {
     try {
       const email = document.getElementById('auth-email').value;
       const password = document.getElementById('auth-password').value;
-      await signUp(email, password);
-      updateAuthMessages({ error: '', feedback: 'Compte créé avec succès, vous pouvez vous connecter.' });
+      await signUp(email, password, feedbackEl);
+      sessionStorage.setItem(
+        AUTH_FEEDBACK_STORAGE_KEY,
+        'Compte créé avec succès ✅ Vérifiez vos emails.'
+      );
       location.hash = '#/login';
     } catch (err) {
-      updateAuthMessages({ error: err.message || 'Création de compte impossible.', feedback: '' });
+      // signUp affiche déjà le feedback
     }
   });
 }
 
 if (logoutLink) {
   logoutLink.addEventListener('click', async () => {
-    await logout();
-    if (nav) nav.hidden = true;
-    if (authContainer) authContainer.hidden = false;
-    updateAuthMessages({ error: '', feedback: '' });
+    try {
+      await logout(feedbackEl);
+      if (nav) nav.hidden = true;
+      if (authContainer) authContainer.hidden = false;
+    } catch (err) {
+      // logout affiche déjà le feedback
+    }
   });
 }
 
@@ -69,7 +69,6 @@ if (logoutLink) {
 function normalizeRoute() {
   const { hash } = window.location;
 
-  // Cas : lien de reset avec access_token et refresh_token dans l’URL
   if (hash.startsWith('#/reset-password')) {
     return hash;
   }
@@ -77,7 +76,7 @@ function normalizeRoute() {
   return hash || '#/login';
 }
 
-// --- Capture session de recovery Supabase (v2 : setSession à la place de getSessionFromUrl) ---
+// --- Capture session de recovery Supabase ---
 async function captureSupabaseRecoverySession() {
   const route = normalizeRoute();
   if (route.startsWith('#/reset-password?')) {
@@ -95,7 +94,7 @@ async function captureSupabaseRecoverySession() {
       }
     } catch (err) {
       console.error('[router] Erreur capture session Supabase', err);
-      updateAuthMessages({ error: err.message || 'Lien invalide ou expiré.', feedback: '' });
+      showFeedback(feedbackEl, 'error', err.message || 'Lien invalide ou expiré.');
     }
   }
 }
@@ -105,7 +104,11 @@ function showAuthView(feedbackMessage = '') {
   app.innerHTML = '';
   if (authContainer) authContainer.hidden = false;
   if (nav) nav.hidden = true;
-  updateAuthMessages({ error: '', feedback: feedbackMessage });
+  if (feedbackMessage) {
+    showFeedback(feedbackEl, 'info', feedbackMessage);
+  } else {
+    feedbackEl.innerHTML = '';
+  }
 }
 
 // --- Router principal ---
@@ -160,7 +163,11 @@ async function router() {
     case '#/admin':
       renderAdmin(app); break;
     default:
-      app.innerHTML = '<h2 class="text-center text-lg mt-10">Bienvenue sur Ä Collaborative Lab</h2>';
+      app.innerHTML = `
+        <div class="max-w-xl mx-auto text-center mt-12">
+          <h2 class="text-2xl font-semibold mb-4">Bienvenue sur Ä Collaborative Lab</h2>
+          <p class="text-gray-600">Sélectionnez une section dans le menu pour commencer.</p>
+        </div>`;
   }
 }
 
