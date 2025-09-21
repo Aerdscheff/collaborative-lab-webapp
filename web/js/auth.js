@@ -70,3 +70,10 @@ export async function getSession() {
     return null;
   }
 }
+// Aliases pour compatibilité avec router.js
+export const signIn = login;
+export const signUp = signup;
+export async function getJWT() {
+  const session = await getSession();
+  return session?.access_token || null;
+}
