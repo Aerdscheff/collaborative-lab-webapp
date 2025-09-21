@@ -30,32 +30,40 @@ export async function render(app) {
     }
 
     feedback.innerHTML = '';
-    list.innerHTML = fiches.map(fiche => `
-      <div class="border rounded p-4 shadow-sm">
-        <h3 class="text-lg font-medium">${fiche.title || 'Sans titre'}</h3>
-        <p class="text-sm text-gray-600 mb-2">${fiche.resume || ''}</p>
-        <div class="flex space-x-2 mt-2">
-          <button class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded edit-fiche"
-                  data-id="${fiche.id}">
-            ✏️ Modifier
-          </button>
-          <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded delete-fiche"
-                  data-id="${fiche.id}">
-            🗑 Supprimer
-          </button>
+    list.innerHTML = fiches
+      .map(
+        (fiche) => `
+        <div class="border rounded p-4 shadow-sm">
+          <h3 class="text-lg font-medium">${fiche.title || 'Sans titre'}</h3>
+          <p class="text-sm text-gray-600 mb-2">${fiche.summary || ''}</p>
+          <div class="flex space-x-2 mt-2">
+            <button class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded edit-fiche"
+                    data-id="${fiche.id}">
+              ✏️ Modifier
+            </button>
+            <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded delete-fiche"
+                    data-id="${fiche.id}">
+              🗑 Supprimer
+            </button>
+            <a href="#/fiches/${fiche.id}/messages"
+               class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded">
+              💬 Voir les messages
+            </a>
+          </div>
         </div>
-      </div>
-    `).join('');
+      `
+      )
+      .join('');
 
     // Boutons Modifier
-    list.querySelectorAll('.edit-fiche').forEach(btn => {
+    list.querySelectorAll('.edit-fiche').forEach((btn) => {
       btn.addEventListener('click', () => {
         window.location.hash = `#/fiches/create?id=${btn.dataset.id}`;
       });
     });
 
     // Boutons Supprimer
-    list.querySelectorAll('.delete-fiche').forEach(btn => {
+    list.querySelectorAll('.delete-fiche').forEach((btn) => {
       btn.addEventListener('click', async () => {
         if (!confirm('Supprimer cette fiche ?')) return;
         try {
@@ -68,7 +76,6 @@ export async function render(app) {
         }
       });
     });
-
   } catch (err) {
     console.error('[fiches] Erreur chargement', err);
     showFeedback(feedback, 'error', 'Impossible de charger les fiches.');
