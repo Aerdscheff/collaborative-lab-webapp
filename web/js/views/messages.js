@@ -1,10 +1,10 @@
 import { supabase } from '../auth.js';
 import { showFeedback } from '../utils/feedback.js';
 
-export async function render(app) {
+export async function render(app, ficheId) {
   app.innerHTML = `
     <section class="max-w-3xl mx-auto bg-white shadow rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-4">📨 Messagerie</h2>
+      <h2 class="text-xl font-semibold mb-4">📨 Discussions liées à cette fiche</h2>
       <div id="messages-feedback" class="mb-4"></div>
 
       <!-- Liste des messages -->
@@ -14,7 +14,7 @@ export async function render(app) {
       <form id="message-form" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700">Nouveau message</label>
-          <textarea name="content" rows="3"
+          <textarea name="body" rows="3"
             class="mt-1 block w-full border rounded px-3 py-2"
             placeholder="Écrivez votre message..."></textarea>
         </div>
@@ -32,21 +32,21 @@ export async function render(app) {
   const list = app.querySelector('#messages-list');
   const form = app.querySelector('#message-form');
 
-  // Charger les messages
+  // Charger les messages d'une fiche
   async function loadMessages() {
     try {
       showFeedback(feedback, 'info', 'Chargement des messages…');
       const { data, error } = await supabase
         .from('messages')
-        .select('id, owner_id, content, created_at')
-        .order('created_at', { ascending: false })
-        .limit(20);
+        .select('id, author_id, body, created_at')
+        .eq('fiche_id', ficheId)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       feedback.innerHTML = '';
 
       if (!data || data.length === 0) {
-        list.innerHTML = `<p class="text-gray-500">Aucun message pour l’instant.</p>`;
+        list.innerHTML = `<p class="text-gray-500">Aucun message pour cette fiche.</p>`;
         return;
       }
 
@@ -54,9 +54,9 @@ export async function render(app) {
         .map(
           (msg) => `
           <div class="border rounded p-3 shadow-sm">
-            <p class="text-gray-800">${msg.content?.text || '[message vide]'}</p>
+            <p class="text-gray-800">${msg.body || '[message vide]'}</p>
             <p class="text-sm text-gray-500 mt-1">
-              Auteur: ${msg.owner_id || 'Inconnu'} – ${new Date(msg.created_at).toLocaleString()}
+              Auteur: ${msg.author_id || 'Inconnu'} – ${new Date(msg.created_at).toLocaleString()}
             </p>
           </div>
         `
@@ -71,8 +71,8 @@ export async function render(app) {
   // Soumission du formulaire
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const text = form.content.value.trim();
-    if (!text) {
+    const body = form.body.value.trim();
+    if (!body) {
       showFeedback(feedback, 'error', 'Le message est vide.');
       return;
     }
@@ -80,13 +80,16 @@ export async function render(app) {
     showFeedback(feedback, 'info', 'Envoi en cours…');
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+
       const { error } = await supabase.from('messages').insert({
-        owner_id: (await supabase.auth.getSession()).data.session?.user.id,
-        content: { text },   // stocké en JSONB
+        fiche_id: ficheId,
+        author_id: userId,
+        body,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        status: 'published',
-        visibility: 'public'
+        kind: 'comment'
       });
       if (error) throw error;
 
@@ -99,6 +102,6 @@ export async function render(app) {
     }
   });
 
-  // Charger dès l’ouverture
+  // Charger au démarrage
   loadMessages();
 }
