@@ -38,7 +38,7 @@ export async function render(app) {
       showFeedback(feedback, 'info', 'Chargement des messages…');
       const { data, error } = await supabase
         .from('messages')
-        .select('*')
+        .select('id, owner_id, content, created_at')
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -54,9 +54,9 @@ export async function render(app) {
         .map(
           (msg) => `
           <div class="border rounded p-3 shadow-sm">
-            <p class="text-gray-800">${msg.content}</p>
+            <p class="text-gray-800">${msg.content?.text || '[message vide]'}</p>
             <p class="text-sm text-gray-500 mt-1">
-              ${msg.author || 'Anonyme'} – ${new Date(msg.created_at).toLocaleString()}
+              Auteur: ${msg.owner_id || 'Inconnu'} – ${new Date(msg.created_at).toLocaleString()}
             </p>
           </div>
         `
@@ -71,8 +71,8 @@ export async function render(app) {
   // Soumission du formulaire
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const content = form.content.value.trim();
-    if (!content) {
+    const text = form.content.value.trim();
+    if (!text) {
       showFeedback(feedback, 'error', 'Le message est vide.');
       return;
     }
@@ -81,8 +81,12 @@ export async function render(app) {
 
     try {
       const { error } = await supabase.from('messages').insert({
-        content,
-        created_at: new Date().toISOString()
+        owner_id: (await supabase.auth.getSession()).data.session?.user.id,
+        content: { text },   // stocké en JSONB
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: 'published',
+        visibility: 'public'
       });
       if (error) throw error;
 
