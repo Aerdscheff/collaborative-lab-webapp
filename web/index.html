@@ -4,29 +4,32 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Collaborative Lab</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
-    <!-- Header -->
-    <header id="header"></header>
+    <!-- Header (navbar injectée ici une fois pour toutes) -->
+    <header id="navbar"></header>
 
     <!-- Contenu principal -->
     <main id="app" class="flex-1 container mx-auto px-4 py-6">
-      <!-- Ici le router injecte les vues -->
+      <!-- Le router injectera les vues ici -->
     </main>
 
     <!-- Footer -->
     <footer class="bg-gray-800 text-white text-center py-3">
       <p class="text-sm">
-        © 2025 Collaborative Lab – Äerdschëff ·
-        <a href="https://aerdscheff.lu" class="underline hover:text-gray-300">
-          Site officiel
-        </a>
+        © 2025 Collaborative Lab – Äerdschëff
       </p>
     </footer>
 
     <!-- Scripts -->
-    <script type="module" src="/js/router.js"></script>
+    <script type="module">
+      import { renderNavbar } from './js/views/navbar.js';
+      import './js/router.js';
+
+      // Afficher la navbar une seule fois
+      const navContainer = document.getElementById('navbar');
+      renderNavbar(navContainer);
+    </script>
   </body>
 </html>
