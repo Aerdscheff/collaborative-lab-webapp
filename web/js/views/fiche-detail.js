@@ -4,10 +4,19 @@ import { showFeedback } from '../utils/feedback.js';
 export async function render(app, ficheId) {
   app.innerHTML = `
     <section class="max-w-4xl mx-auto bg-white shadow rounded-lg p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Détail de la fiche</h1>
+        <a href="#/fiches"
+           class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
+          ⬅️ Retour aux fiches
+        </a>
+      </div>
       <div id="fiche-content" class="mb-8"></div>
+
       <h2 class="text-xl font-semibold mb-4">💬 Discussion</h2>
       <div id="messages-feedback" class="mb-4"></div>
       <div id="messages-list" class="space-y-4 mb-6"></div>
+
       <form id="message-form" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700">Nouveau message</label>
@@ -47,11 +56,12 @@ export async function render(app, ficheId) {
       }
 
       ficheContainer.innerHTML = `
-        <h1 class="text-2xl font-bold mb-2">${data.title}</h1>
+        <h2 class="text-xl font-bold mb-2">${data.title}</h2>
         <p class="text-gray-600 mb-4">${data.summary || ''}</p>
         <div class="prose">${data.content || ''}</div>
         <p class="text-sm text-gray-500 mt-4">
-          Créée le ${new Date(data.created_at).toLocaleString()} – Dernière mise à jour le ${new Date(data.updated_at).toLocaleString()}
+          Créée le ${new Date(data.created_at).toLocaleString()} – 
+          Dernière mise à jour le ${new Date(data.updated_at).toLocaleString()}
         </p>
       `;
     } catch (err) {
