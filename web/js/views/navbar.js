@@ -38,8 +38,9 @@ export function renderNavbar(container) {
       </div>
     </nav>
 
-    <!-- Menu mobile -->
-    <div id="menu-mobile" class="hidden bg-gray-700 text-white px-4 py-3 space-y-2 lg:hidden">
+    <!-- Menu mobile avec animation -->
+    <div id="menu-mobile"
+         class="max-h-0 overflow-hidden opacity-0 transition-all duration-300 ease-in-out bg-gray-700 text-white px-4 py-0 space-y-2 lg:hidden">
       <a href="#/profiles" data-route="#/profiles" class="nav-link block hover:text-gray-300">Profil</a>
       <a href="#/fiches" data-route="#/fiches" class="nav-link block hover:text-gray-300">Fiches – Liste</a>
       <a href="#/fiches/create" data-route="#/fiches/create" class="nav-link block hover:text-gray-300">Fiches – Nouvelle</a>
@@ -52,12 +53,20 @@ export function renderNavbar(container) {
     </div>
   `;
 
-  // Toggle du menu mobile
+  // Toggle du menu mobile avec animation
   const toggleBtn = container.querySelector('#menu-toggle');
   const mobileMenu = container.querySelector('#menu-mobile');
   if (toggleBtn && mobileMenu) {
     toggleBtn.addEventListener('click', () => {
-      mobileMenu.classList.toggle('hidden');
+      if (mobileMenu.classList.contains('max-h-0')) {
+        // Ouvrir
+        mobileMenu.classList.remove('max-h-0', 'opacity-0', 'py-0');
+        mobileMenu.classList.add('max-h-screen', 'opacity-100', 'py-3');
+      } else {
+        // Fermer
+        mobileMenu.classList.add('max-h-0', 'opacity-0', 'py-0');
+        mobileMenu.classList.remove('max-h-screen', 'opacity-100', 'py-3');
+      }
     });
   }
 
@@ -90,7 +99,6 @@ export function renderNavbar(container) {
     });
   }
 
-  // Appliquer au chargement et à chaque changement de hash
   highlightActiveLink();
   window.addEventListener('hashchange', highlightActiveLink);
 }
