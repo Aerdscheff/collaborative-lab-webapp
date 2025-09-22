@@ -4,13 +4,17 @@ import { showFeedback } from '../utils/feedback.js';
 export async function render(app, ficheId) {
   app.innerHTML = `
     <section class="max-w-3xl mx-auto bg-white shadow rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-4">📨 Discussions liées à cette fiche</h2>
-      <div id="messages-feedback" class="mb-4"></div>
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-semibold">📨 Discussion liée</h2>
+        <a href="#/fiches/${ficheId}"
+           class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
+          ⬅️ Retour à la fiche
+        </a>
+      </div>
 
-      <!-- Liste des messages -->
+      <div id="messages-feedback" class="mb-4"></div>
       <div id="messages-list" class="space-y-4 mb-6"></div>
 
-      <!-- Formulaire envoi -->
       <form id="message-form" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700">Nouveau message</label>
@@ -102,6 +106,6 @@ export async function render(app, ficheId) {
     }
   });
 
-  // Charger au démarrage
+  // Charger dès l’ouverture
   loadMessages();
 }
