@@ -219,3 +219,72 @@ footer .partners img {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+/* 📱 Responsive Design */
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    height: auto;
+    padding: 1rem;
+  }
+
+  nav {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  nav a {
+    margin: 0.5rem;
+  }
+
+  main {
+    margin: 1rem;
+    padding: 0.5rem;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+  }
+
+  .card {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Accueil (home.js) */
+  .card img {
+    max-width: 90% !important;
+    margin: 0 auto 1rem auto;
+    display: block;
+  }
+
+  button {
+    width: 100%;
+    font-size: 1.1rem;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.2rem;
+  }
+
+  nav {
+    flex-direction: column;
+  }
+
+  nav a {
+    display: block;
+    margin: 0.3rem 0;
+  }
+}
