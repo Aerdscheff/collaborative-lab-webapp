@@ -7,14 +7,23 @@
   --font-main: 'Roboto', sans-serif;
 }
 
+/* Reset de base */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   font-family: var(--font-main);
   background-color: var(--color-bg);
   color: var(--color-text);
   margin: 0;
   padding-top: 70px; /* espace pour le header fixe */
+  line-height: 1.6;
 }
 
+/* HEADER */
 header {
   background-color: var(--color-primary);
   color: white;
@@ -27,11 +36,14 @@ header {
   width: 100%;
   height: 70px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  z-index: 1000;
 }
 
 header .logo {
   display: flex;
   align-items: center;
+  font-weight: bold;
+  font-size: 1.2rem;
 }
 
 header .logo img {
@@ -44,12 +56,14 @@ nav a {
   margin-left: 1rem;
   text-decoration: none;
   font-weight: bold;
+  transition: color 0.2s ease-in-out;
 }
 
 nav a:hover {
   color: var(--color-secondary);
 }
 
+/* MAIN */
 main {
   max-width: 900px;
   margin: 2rem auto;
@@ -61,6 +75,12 @@ h1 {
   margin-bottom: 1rem;
 }
 
+h2 {
+  margin-bottom: 0.5rem;
+  color: var(--color-accent);
+}
+
+/* CARDS */
 .card {
   background: white;
   padding: 1.5rem;
@@ -69,11 +89,40 @@ h1 {
   margin-bottom: 2rem;
 }
 
-.card h2 {
+.card h2, 
+.card h3 {
   margin-top: 0;
-  color: var(--color-accent);
 }
 
+/* FORMULAIRES */
+form.form label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: bold;
+}
+
+form.form input,
+form.form textarea,
+form.form select {
+  width: 100%;
+  padding: 0.6rem;
+  margin-top: 0.4rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+form.form textarea {
+  resize: vertical;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* BOUTONS */
 button {
   background-color: var(--color-primary);
   color: white;
@@ -82,13 +131,23 @@ button {
   padding: 0.6rem 1.2rem;
   cursor: pointer;
   font-size: 1rem;
-  margin-top: 1rem;
+  transition: background-color 0.2s ease-in-out;
 }
 
 button:hover {
   background-color: var(--color-secondary);
 }
 
+/* MESSAGES */
+.message {
+  background: #fff3f8;
+  border-left: 4px solid var(--color-primary);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 6px;
+}
+
+/* FOOTER */
 footer {
   background-color: #fff;
   padding: 1rem 2rem;
