@@ -1,79 +1,46 @@
-import { supabase } from '../auth.js';
-import { getProfile } from '../api.js';
-import { showFeedback } from '../utils/feedback.js';
-
-export async function render(app, userId) {
+export function render(app) {
   app.innerHTML = `
-    <section class="max-w-2xl mx-auto bg-white shadow rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-4">Modifier le profil</h2>
-      <form id="profile-form" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Nom</label>
-          <input type="text" name="name" class="mt-1 block w-full border rounded px-3 py-2" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Email</label>
-          <input type="email" name="email" class="mt-1 block w-full border rounded px-3 py-2" disabled />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Bio</label>
-          <textarea name="bio" rows="3" class="mt-1 block w-full border rounded px-3 py-2"></textarea>
-        </div>
-        <div class="flex justify-end space-x-2">
-          <button type="button" id="cancel-edit"
-            class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
-            Annuler
-          </button>
-          <button type="submit"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-            Enregistrer
-          </button>
+    <section class="card">
+      <h2>Modifier mon Profil</h2>
+      <form id="profile-edit-form" class="form">
+        <label>
+          Nom complet :
+          <input type="text" name="name" value="Jean Dupont" required>
+        </label>
+        <label>
+          Email :
+          <input type="email" name="email" disabled value="jean.dupont@example.com">
+        </label>
+        <label>
+          Biographie :
+          <textarea name="bio" rows="4">Enseignant en sciences naturelles passionné par l’écologie.</textarea>
+        </label>
+        <label>
+          Niveaux / âges :
+          <input type="text" name="levels" value="Primaire">
+        </label>
+        <label>
+          Disciplines :
+          <input type="text" name="disciplines" value="Sciences naturelles">
+        </label>
+        <label>
+          Objectifs de Développement Durable (ODD) :
+          <input type="text" name="odd" value="ODD 4, ODD 15">
+        </label>
+        <div class="actions">
+          <button type="submit">💾 Sauvegarder</button>
+          <button type="button" id="back">↩️ Retour</button>
         </div>
       </form>
-      <div id="profile-feedback" class="mt-4"></div>
     </section>
   `;
 
-  const form = app.querySelector('#profile-form');
-  const feedback = app.querySelector('#profile-feedback');
-  const cancelBtn = app.querySelector('#cancel-edit');
-
-  // Préremplir avec les données existantes
-  try {
-    const profile = await getProfile(userId);
-    if (profile) {
-      form.name.value = profile.name || '';
-      form.email.value = profile.email || '';
-      form.bio.value = profile.bio || '';
-    }
-  } catch (err) {
-    console.error('[profile-edit] Erreur chargement profil', err);
-    showFeedback(feedback, 'error', "Impossible de charger vos informations.");
-  }
-
-  // Soumission du formulaire
-  form.addEventListener('submit', async (e) => {
+  document.getElementById("profile-edit-form").addEventListener("submit", (e) => {
     e.preventDefault();
-    showFeedback(feedback, 'info', 'Enregistrement en cours...');
-
-    const payload = {
-      name: form.name.value.trim(),
-      bio: form.bio.value.trim(),
-    };
-
-    try {
-      const { error } = await supabase.from('profiles').update(payload).eq('id', userId);
-      if (error) throw error;
-
-      showFeedback(feedback, 'success', 'Profil mis à jour avec succès ✅');
-    } catch (err) {
-      console.error('[profile-edit] Erreur update profil', err);
-      showFeedback(feedback, 'error', err.message || "Impossible de mettre à jour le profil.");
-    }
+    alert("Modifications enregistrées !");
   });
 
-  // Bouton annuler
-  cancelBtn.addEventListener('click', () => {
-    window.location.hash = '#/profiles';
+  document.getElementById("back").addEventListener("click", () => {
+    window.location.hash = "#profil";
   });
 }
