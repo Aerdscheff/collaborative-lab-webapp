@@ -1,35 +1,48 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Collaborative Lab</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
-    <!-- Header (navbar injectée ici une fois pour toutes) -->
-    <header id="navbar"></header>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collaborative Lab – Äerdschëff</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <img src="assets/logo.png" alt="Äerdschëff Logo">
+      <span>Äerdschëff Lab</span>
+    </div>
+    <nav>
+      <a href="#profil">Mon Profil</a>
+      <a href="#fiches">Fiches</a>
+      <a href="#messages">Messages</a>
+      <a href="#collaborations">Collaborations</a>
+      <a href="#admin">Admin</a>
+    </nav>
+  </header>
 
-    <!-- Contenu principal -->
-    <main id="app" class="flex-1 container mx-auto px-4 py-6">
-      <!-- Le router injectera les vues ici -->
-    </main>
+  <!-- MAIN -->
+  <main>
+    <h1>Bienvenue dans le Collaborative Lab</h1>
 
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white text-center py-3">
-      <p class="text-sm">
-        © 2025 Collaborative Lab – Äerdschëff
-      </p>
-    </footer>
+    <section class="card">
+      <h2>Fiche pédagogique – Exemple</h2>
+      <p><strong>Niveaux :</strong> Primaire, Secondaire</p>
+      <p><strong>Discipline :</strong> Sciences naturelles</p>
+      <p><strong>Résumé :</strong> Activité sur la biodiversité locale avec observation des insectes dans la cour.</p>
+      <button>Voir la fiche</button>
+    </section>
+  </main>
 
-    <!-- Scripts -->
-    <script type="module">
-      import { renderNavbar } from './js/views/navbar.js';
-      import './js/router.js';
-
-      // Afficher la navbar une seule fois
-      const navContainer = document.getElementById('navbar');
-      renderNavbar(navContainer);
-    </script>
-  </body>
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2025 Äerdschëff asbl – Collaborative Lab</p>
+    <div class="partners">
+      <img src="assets/leader.png" alt="LEADER">
+      <img src="assets/eu.png" alt="EU">
+      <img src="assets/ministry.png" alt="Ministère">
+    </div>
+  </footer>
+</body>
 </html>
