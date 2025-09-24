@@ -11,7 +11,11 @@ import { render as renderResetPassword } from "./views/reset-password.js";
 
 // Helper loader + animation fade-in
 function showLoader(app) {
-  app.innerHTML = `<div class="loader">Chargement</div>`;
+  app.innerHTML = `
+    <div class="loader">
+      <div class="spinner"></div>
+    </div>
+  `;
 }
 
 function withFadeIn(renderFn, app) {
