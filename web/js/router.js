@@ -9,6 +9,14 @@ import { render as renderCollabs } from "./views/collaborations.js";
 import { render as renderAdmin } from "./views/admin.js";
 import { render as renderResetPassword } from "./views/reset-password.js";
 
+// Helper pour appliquer l’animation fade-in
+function withFadeIn(renderFn, app) {
+  renderFn(app);
+  app.classList.remove("fade-in"); // reset si déjà présent
+  void app.offsetWidth; // "truc" pour relancer l’animation
+  app.classList.add("fade-in");
+}
+
 // Router principal
 function router() {
   const app = document.querySelector("main");
@@ -16,31 +24,31 @@ function router() {
 
   switch (hash) {
     case "#home":
-      renderHome(app);
+      withFadeIn(renderHome, app);
       break;
     case "#profil":
-      renderProfile(app);
+      withFadeIn(renderProfile, app);
       break;
     case "#profil-edit":
-      renderProfileEdit(app);
+      withFadeIn(renderProfileEdit, app);
       break;
     case "#fiches":
-      renderFiches(app);
+      withFadeIn(renderFiches, app);
       break;
     case "#fiches-create":
-      renderFicheCreate(app);
+      withFadeIn(renderFicheCreate, app);
       break;
     case "#messages":
-      renderMessages(app);
+      withFadeIn(renderMessages, app);
       break;
     case "#collaborations":
-      renderCollabs(app);
+      withFadeIn(renderCollabs, app);
       break;
     case "#admin":
-      renderAdmin(app);
+      withFadeIn(renderAdmin, app);
       break;
     case "#reset-password":
-      renderResetPassword(app);
+      withFadeIn(renderResetPassword, app);
       break;
     default:
       app.innerHTML = `
@@ -52,6 +60,9 @@ function router() {
           </p>
         </section>
       `;
+      app.classList.remove("fade-in");
+      void app.offsetWidth;
+      app.classList.add("fade-in");
   }
 }
 
