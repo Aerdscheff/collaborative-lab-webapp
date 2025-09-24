@@ -9,12 +9,19 @@ import { render as renderCollabs } from "./views/collaborations.js";
 import { render as renderAdmin } from "./views/admin.js";
 import { render as renderResetPassword } from "./views/reset-password.js";
 
-// Helper pour appliquer l’animation fade-in
+// Helper loader + animation fade-in
+function showLoader(app) {
+  app.innerHTML = `<div class="loader">Chargement</div>`;
+}
+
 function withFadeIn(renderFn, app) {
-  renderFn(app);
-  app.classList.remove("fade-in"); // reset si déjà présent
-  void app.offsetWidth; // "truc" pour relancer l’animation
-  app.classList.add("fade-in");
+  showLoader(app);
+  setTimeout(() => {
+    renderFn(app);
+    app.classList.remove("fade-in");
+    void app.offsetWidth; // reset animation
+    app.classList.add("fade-in");
+  }, 300); // délai pour voir le loader
 }
 
 // Router principal
@@ -51,18 +58,21 @@ function router() {
       withFadeIn(renderResetPassword, app);
       break;
     default:
-      app.innerHTML = `
-        <section class="card">
-          <h2>Page introuvable</h2>
-          <p>
-            La page demandée n’existe pas. Retour à 
-            <a href="#home">l’accueil</a>.
-          </p>
-        </section>
-      `;
-      app.classList.remove("fade-in");
-      void app.offsetWidth;
-      app.classList.add("fade-in");
+      showLoader(app);
+      setTimeout(() => {
+        app.innerHTML = `
+          <section class="card">
+            <h2>Page introuvable</h2>
+            <p>
+              La page demandée n’existe pas. Retour à 
+              <a href="#home">l’accueil</a>.
+            </p>
+          </section>
+        `;
+        app.classList.remove("fade-in");
+        void app.offsetWidth;
+        app.classList.add("fade-in");
+      }, 300);
   }
 }
 
