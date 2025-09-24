@@ -160,3 +160,18 @@ footer .partners img {
   height: 30px;
   margin: 0 0.5rem;
 }
+/* ANIMATION DE TRANSITION ENTRE LES VUES */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
