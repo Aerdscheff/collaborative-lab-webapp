@@ -1,111 +1,27 @@
-import { supabase } from '../auth.js';
-import { showFeedback } from '../utils/feedback.js';
-
-export async function render(app, ficheId) {
+export function render(app) {
   app.innerHTML = `
-    <section class="max-w-3xl mx-auto bg-white shadow rounded-lg p-6">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl font-semibold">📨 Discussion liée</h2>
-        <a href="#/fiches/${ficheId}"
-           class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
-          ⬅️ Retour à la fiche
-        </a>
+    <section class="card">
+      <h2>Messagerie interne</h2>
+      <div class="message">
+        <p><strong>Admin :</strong> Bienvenue dans la plateforme !</p>
+        <small>Reçu le 12/09/2025</small>
       </div>
-
-      <div id="messages-feedback" class="mb-4"></div>
-      <div id="messages-list" class="space-y-4 mb-6"></div>
-
-      <form id="message-form" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Nouveau message</label>
-          <textarea name="body" rows="3"
-            class="mt-1 block w-full border rounded px-3 py-2"
-            placeholder="Écrivez votre message..."></textarea>
-        </div>
-        <div class="text-right">
-          <button type="submit"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-            Envoyer
-          </button>
-        </div>
+      <div class="message">
+        <p><strong>Marie :</strong> Souhaites-tu collaborer sur un projet biodiversité ?</p>
+        <small>Reçu le 20/09/2025</small>
+      </div>
+      <form id="new-message" class="form">
+        <label>
+          Nouveau message :
+          <textarea name="content" rows="3" required></textarea>
+        </label>
+        <button type="submit">✉️ Envoyer</button>
       </form>
     </section>
   `;
 
-  const feedback = app.querySelector('#messages-feedback');
-  const list = app.querySelector('#messages-list');
-  const form = app.querySelector('#message-form');
-
-  // Charger les messages d'une fiche
-  async function loadMessages() {
-    try {
-      showFeedback(feedback, 'info', 'Chargement des messages…');
-      const { data, error } = await supabase
-        .from('messages')
-        .select('id, author_id, body, created_at')
-        .eq('fiche_id', ficheId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      feedback.innerHTML = '';
-
-      if (!data || data.length === 0) {
-        list.innerHTML = `<p class="text-gray-500">Aucun message pour cette fiche.</p>`;
-        return;
-      }
-
-      list.innerHTML = data
-        .map(
-          (msg) => `
-          <div class="border rounded p-3 shadow-sm">
-            <p class="text-gray-800">${msg.body || '[message vide]'}</p>
-            <p class="text-sm text-gray-500 mt-1">
-              Auteur: ${msg.author_id || 'Inconnu'} – ${new Date(msg.created_at).toLocaleString()}
-            </p>
-          </div>
-        `
-        )
-        .join('');
-    } catch (err) {
-      console.error('[messages] Erreur load', err);
-      showFeedback(feedback, 'error', 'Impossible de charger les messages.');
-    }
-  }
-
-  // Soumission du formulaire
-  form.addEventListener('submit', async (e) => {
+  document.getElementById("new-message").addEventListener("submit", (e) => {
     e.preventDefault();
-    const body = form.body.value.trim();
-    if (!body) {
-      showFeedback(feedback, 'error', 'Le message est vide.');
-      return;
-    }
-
-    showFeedback(feedback, 'info', 'Envoi en cours…');
-
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
-
-      const { error } = await supabase.from('messages').insert({
-        fiche_id: ficheId,
-        author_id: userId,
-        body,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        kind: 'comment'
-      });
-      if (error) throw error;
-
-      showFeedback(feedback, 'success', 'Message envoyé ✅');
-      form.reset();
-      await loadMessages();
-    } catch (err) {
-      console.error('[messages] Erreur envoi', err);
-      showFeedback(feedback, 'error', err.message || 'Impossible d’envoyer le message.');
-    }
+    alert("Message envoyé !");
   });
-
-  // Charger dès l’ouverture
-  loadMessages();
 }
