@@ -1,42 +1,22 @@
-export function render(app) {
-  app.innerHTML = `
-    <section class="card">
-      <h2>Mon Profil</h2>
-      <form id="profile-form" class="form">
-        <label>
-          Nom complet :
-          <input type="text" name="name" placeholder="Votre nom" required>
-        </label>
-        <label>
-          Email :
-          <input type="email" name="email" disabled value="user@example.com">
-        </label>
-        <label>
-          Biographie :
-          <textarea name="bio" rows="4" placeholder="Décrivez votre parcours pédagogique..."></textarea>
-        </label>
-        <label>
-          Niveaux / âges :
-          <input type="text" name="levels" placeholder="Primaire, secondaire...">
-        </label>
-        <label>
-          Disciplines :
-          <input type="text" name="disciplines" placeholder="Maths, sciences, langues...">
-        </label>
-        <label>
-          Objectifs de Développement Durable (ODD) :
-          <input type="text" name="odd" placeholder="ODD 4, ODD 12...">
-        </label>
-        <button type="submit">💾 Enregistrer</button>
-      </form>
-    </section>
+import { getProfile } from '../api.js';
+import { renderLayout } from '../layout.js';
+
+export async function render(app, userId) {
+  let content = `
+    <h1 class="text-2xl font-bold text-[#E25C5C] mb-6">👤 Profil</h1>
+    <div id="profile-content" class="space-y-4"></div>
+    <a href="#/profiles/edit" class="bg-[#E25C5C] hover:bg-red-600 text-white px-4 py-2 rounded">Modifier</a>
   `;
 
-  const form = document.getElementById("profile-form");
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(form).entries());
-    console.log("Profil sauvegardé :", data);
-    alert("Profil mis à jour avec succès !");
-  });
+  renderLayout(app, content);
+
+  const container = document.getElementById('profile-content');
+  try {
+    const profile = await getProfile(userId);
+    container.innerHTML = profile
+      ? `<p><strong>Nom :</strong> ${profile.name || '—'}</p><p><strong>Email :</strong> ${profile.email || '—'}</p>`
+      : `<p class="text-red-500">Aucun profil trouvé.</p>`;
+  } catch {
+    container.innerHTML = `<p class="text-red-500">Erreur chargement profil.</p>`;
+  }
 }
