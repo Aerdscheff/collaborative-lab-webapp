@@ -4,16 +4,17 @@ import { renderLayout } from '../layout.js';
 
 export async function render(app) {
   const content = `
-    <h1 class="text-3xl font-exo2 font-bold text-[#E25C5C] mb-6">📚 Mes fiches</h1>
-    <div id="fiches-feedback" class="mb-4"></div>
-    <div id="fiches-list" class="space-y-4"></div>
-    <div class="mt-6 text-right">
+    <h1 class="text-4xl font-exo2 font-bold text-[#E25C5C] mb-8">📚 Mes fiches</h1>
+    <div id="fiches-feedback" class="mb-6"></div>
+    <div id="fiches-list" class="grid gap-6 md:grid-cols-2"></div>
+    <div class="mt-10 text-center">
       <a href="#/fiches/create"
-        class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-[0_0_10px_2px_rgba(64,224,208,0.6)] transition">
+        class="inline-block bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.6)] transition text-lg font-medium">
         ➕ Nouvelle fiche
       </a>
     </div>
   `;
+
   renderLayout(app, content);
 
   const feedback = document.getElementById('fiches-feedback');
@@ -29,20 +30,30 @@ export async function render(app) {
       return;
     }
 
-    list.innerHTML = fiches.map(f => `
-      <div class="rounded-lg bg-white shadow-md hover:scale-[1.01] transition">
-        <div class="bg-gradient-to-r from-[#E25C5C] to-purple-600 h-2"></div>
-        <div class="p-4">
-          <h3 class="font-exo2 text-[#E25C5C] text-lg font-semibold">${f.title || 'Sans titre'}</h3>
-          <p class="text-gray-700">${f.summary || ''}</p>
-          <div class="mt-2 flex gap-2">
-            <a href="#/fiches/${f.id}" class="text-sm text-[#E25C5C] hover:underline">👀 Voir</a>
-            <a href="#/fiches/${f.id}/messages" class="text-sm text-[#E25C5C] hover:underline">💬 Messages</a>
+    list.innerHTML = fiches
+      .map(
+        (fiche) => `
+        <div class="rounded-lg bg-white shadow-md overflow-hidden transform transition hover:scale-[1.02] hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.4)]">
+          <div class="bg-gradient-to-r from-[#E25C5C] to-purple-600 h-2"></div>
+          <div class="p-5">
+            <h3 class="font-exo2 text-xl text-[#E25C5C] font-semibold mb-2">${fiche.title || 'Sans titre'}</h3>
+            <p class="text-gray-700 mb-4">${fiche.summary || 'Pas de résumé disponible.'}</p>
+            <div class="flex space-x-3">
+              <a href="#/fiches/${fiche.id}"
+                 class="text-sm bg-[#E25C5C] hover:bg-red-600 text-white px-3 py-1 rounded-lg transition">
+                 👀 Voir
+              </a>
+              <a href="#/fiches/${fiche.id}/messages"
+                 class="text-sm bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-lg transition">
+                 💬 Messages
+              </a>
+            </div>
           </div>
         </div>
-      </div>
-    `).join('');
+      `
+      )
+      .join('');
   } catch {
-    showFeedback(feedback, 'error', 'Erreur de chargement.');
+    showFeedback(feedback, 'error', 'Impossible de charger les fiches.');
   }
 }
