@@ -11,8 +11,8 @@
     h1, h2, .font-exo2 { font-family: 'Exo 2', sans-serif; }
 
     @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 20px rgba(226,92,92,0.6); }
-      50% { box-shadow: 0 0 40px rgba(64,224,208,0.6); }
+      0%, 100% { box-shadow: 0 0 25px rgba(226,92,92,0.5); }
+      50% { box-shadow: 0 0 45px rgba(64,224,208,0.6); }
     }
     .animate-glow {
       animation: pulseGlow 6s ease-in-out infinite;
@@ -27,16 +27,24 @@
       background-size: 200% 200%;
       animation: gradientShift 20s ease infinite;
     }
+
+    /* Empêche le scroll vertical */
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
   </style>
 </head>
 <body class="bg-[#fdf7f7] text-gray-800 flex flex-col min-h-screen">
 
   <!-- Header -->
-  <header class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white shadow relative z-10">
+  <header class="absolute top-0 left-0 w-full bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white shadow z-20">
     <nav class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <!-- Logo actuel -->
-        <img src="./assets/logo-official.png" alt="Logo Äerdschëff" class="h-8">
+        <!-- Logo dans un badge -->
+        <div class="bg-white rounded-full p-1">
+          <img src="./assets/logo-official.png" alt="Logo Äerdschëff" class="h-8 w-8">
+        </div>
         <span class="font-exo2 text-lg">Collaborative Lab</span>
       </div>
       <div class="flex space-x-6">
@@ -48,43 +56,34 @@
   </header>
 
   <!-- Hero Section -->
-  <section class="relative h-[85vh] flex items-center justify-center overflow-hidden">
-    <!-- Image du bâtiment actuel -->
+  <section class="relative h-screen flex items-center justify-center overflow-hidden">
+    <!-- Image de fond -->
     <img src="./assets/Batiment aerdscheff.png" alt="Bâtiment Äerdschëff"
-         class="absolute inset-0 w-full h-full object-cover opacity-90">
+         class="absolute inset-0 w-full h-full object-cover">
 
-    <!-- Filtre dégradé animé -->
-    <div class="absolute inset-0 bg-gradient-to-r from-[#E25C5C]/50 via-purple-600/40 to-[#E25C5C]/50 animate-gradient"></div>
+    <!-- Overlay dégradé atténué -->
+    <div class="absolute inset-0 bg-gradient-to-r from-[#E25C5C]/40 via-purple-600/30 to-[#E25C5C]/40 animate-gradient"></div>
 
     <!-- Cercle central -->
     <div class="relative z-10 flex flex-col items-center justify-center text-center">
-      <div class="w-60 h-60 rounded-full bg-white/80 flex flex-col items-center justify-center animate-glow px-4">
-        <h1 class="text-2xl font-exo2 text-[#E25C5C]">Bienvenue dans</h1>
-        <h2 class="text-xl font-exo2 text-purple-700">Collaborative Lab</h2>
-        <p class="mt-2 text-sm text-gray-700">
+      <div class="w-80 h-80 rounded-full bg-white/85 flex flex-col items-center justify-center animate-glow px-6">
+        <h1 class="text-3xl font-exo2 text-[#E25C5C]">Bienvenue dans</h1>
+        <h2 class="text-2xl font-exo2 text-purple-700 mb-2">Collaborative Lab</h2>
+        <p class="text-sm text-gray-700">
           Ton espace de cocréation de trames pédagogiques transversales
         </p>
         <a href="#/auth"
-           class="mt-4 bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-5 py-2 rounded-lg shadow-md hover:shadow-[0_0_12px_3px_rgba(64,224,208,0.6)] transition font-medium">
-          🚀 S’inscrire / Se connecter
+           class="mt-6 bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.6)] transition text-lg font-medium flex items-center space-x-2">
+          <span>🚀</span>
+          <span>S’inscrire / Se connecter</span>
         </a>
       </div>
     </div>
   </section>
 
-  <!-- Section suivante -->
-  <section class="relative py-20 bg-[#fdf7f7]">
-    <div class="relative max-w-4xl mx-auto text-center">
-      <h3 class="text-3xl font-exo2 text-[#E25C5C] mb-6">Co-créez vos projets</h3>
-      <p class="text-gray-700">
-        Un outil collaboratif conçu pour expérimenter, partager et bâtir ensemble des pratiques éducatives nouvelles.
-      </p>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="bg-gray-900 text-white text-center py-3 relative z-10">
-    <p class="text-sm opacity-80">© 2025 Äerdschëff · Collaborative Lab</p>
+  <!-- Footer (optionnel ou masqué car Hero occupe tout l’écran) -->
+  <footer class="absolute bottom-0 left-0 w-full bg-gray-900 text-white text-center py-2 text-sm opacity-80 z-20">
+    © 2025 Äerdschëff · Collaborative Lab
   </footer>
 </body>
 </html>
