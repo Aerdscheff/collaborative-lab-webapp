@@ -1,146 +1,50 @@
 import { supabase } from '../auth.js';
+import { renderLayout } from '../layout.js';
 import { showFeedback } from '../utils/feedback.js';
 
 export async function render(app, ficheId) {
-  app.innerHTML = `
-    <section class="max-w-4xl mx-auto bg-white shadow rounded-lg p-6">
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">Détail de la fiche</h1>
-        <a href="#/fiches"
-           class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
-          ⬅️ Retour aux fiches
-        </a>
-      </div>
-      <div id="fiche-content" class="mb-8"></div>
-
-      <h2 class="text-xl font-semibold mb-4">💬 Discussion</h2>
-      <div id="messages-feedback" class="mb-4"></div>
-      <div id="messages-list" class="space-y-4 mb-6"></div>
-
-      <form id="message-form" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Nouveau message</label>
-          <textarea name="body" rows="3"
-            class="mt-1 block w-full border rounded px-3 py-2"
-            placeholder="Écrivez votre message..."></textarea>
-        </div>
-        <div class="text-right">
-          <button type="submit"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-            Envoyer
-          </button>
-        </div>
-      </form>
-    </section>
+  const content = `
+    <a href="#/fiches" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded">⬅ Retour</a>
+    <div id="fiche-content" class="my-6"></div>
+    <h2 class="text-xl font-exo2 font-semibold mb-4">💬 Discussion</h2>
+    <div id="messages-feedback" class="mb-4"></div>
+    <div id="messages-list" class="space-y-4 mb-6"></div>
+    <form id="message-form" class="space-y-4">
+      <textarea name="body" rows="3" class="w-full border rounded px-3 py-2"></textarea>
+      <button type="submit" class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-[0_0_10px_2px_rgba(64,224,208,0.6)] transition">Envoyer</button>
+    </form>
   `;
+  renderLayout(app, content);
 
-  const ficheContainer = app.querySelector('#fiche-content');
-  const feedback = app.querySelector('#messages-feedback');
-  const list = app.querySelector('#messages-list');
-  const form = app.querySelector('#message-form');
+  const ficheContainer = document.getElementById('fiche-content');
+  const list = document.getElementById('messages-list');
+  const feedback = document.getElementById('messages-feedback');
+  const form = document.getElementById('message-form');
 
-  // Charger la fiche
   async function loadFiche() {
-    try {
-      ficheContainer.innerHTML = `<p class="text-gray-500">Chargement de la fiche…</p>`;
-      const { data, error } = await supabase
-        .from('fiches')
-        .select('id, title, summary, content, created_at, updated_at')
-        .eq('id', ficheId)
-        .single();
-
-      if (error) throw error;
-      if (!data) {
-        ficheContainer.innerHTML = `<p class="text-red-500">Fiche introuvable.</p>`;
-        return;
-      }
-
-      ficheContainer.innerHTML = `
-        <h2 class="text-xl font-bold mb-2">${data.title}</h2>
-        <p class="text-gray-600 mb-4">${data.summary || ''}</p>
-        <div class="prose">${data.content || ''}</div>
-        <p class="text-sm text-gray-500 mt-4">
-          Créée le ${new Date(data.created_at).toLocaleString()} – 
-          Dernière mise à jour le ${new Date(data.updated_at).toLocaleString()}
-        </p>
-      `;
-    } catch (err) {
-      console.error('[fiche-detail] Erreur load fiche', err);
-      ficheContainer.innerHTML = `<p class="text-red-500">Impossible de charger la fiche.</p>`;
-    }
+    const { data } = await supabase.from('fiches').select('*').eq('id', ficheId).single();
+    ficheContainer.innerHTML = `
+      <h1 class="text-2xl font-exo2 text-[#E25C5C]">${data.title}</h1>
+      <p class="text-gray-700">${data.summary}</p>
+    `;
   }
 
-  // Charger les messages liés à la fiche
   async function loadMessages() {
-    try {
-      showFeedback(feedback, 'info', 'Chargement des messages…');
-      const { data, error } = await supabase
-        .from('messages')
-        .select('id, author_id, body, created_at')
-        .eq('fiche_id', ficheId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      feedback.innerHTML = '';
-
-      if (!data || data.length === 0) {
-        list.innerHTML = `<p class="text-gray-500">Aucun message pour cette fiche.</p>`;
-        return;
-      }
-
-      list.innerHTML = data
-        .map(
-          (msg) => `
-          <div class="border rounded p-3 shadow-sm">
-            <p class="text-gray-800">${msg.body || '[message vide]'}</p>
-            <p class="text-sm text-gray-500 mt-1">
-              Auteur: ${msg.author_id || 'Inconnu'} – ${new Date(msg.created_at).toLocaleString()}
-            </p>
-          </div>
-        `
-        )
-        .join('');
-    } catch (err) {
-      console.error('[fiche-detail] Erreur load messages', err);
-      showFeedback(feedback, 'error', 'Impossible de charger les messages.');
-    }
+    const { data } = await supabase.from('messages').select('*').eq('fiche_id', ficheId);
+    list.innerHTML = data?.map(m => `<div class="border p-3 rounded bg-white shadow">${m.body}</div>`).join('') || '';
   }
 
-  // Soumission du formulaire message
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const body = form.body.value.trim();
-    if (!body) {
-      showFeedback(feedback, 'error', 'Le message est vide.');
-      return;
-    }
-
-    showFeedback(feedback, 'info', 'Envoi en cours…');
-
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
-
-      const { error } = await supabase.from('messages').insert({
-        fiche_id: ficheId,
-        author_id: userId,
-        body,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        kind: 'comment'
-      });
-      if (error) throw error;
-
-      showFeedback(feedback, 'success', 'Message envoyé ✅');
-      form.reset();
+      await supabase.from('messages').insert({ fiche_id: ficheId, body });
       await loadMessages();
-    } catch (err) {
-      console.error('[fiche-detail] Erreur envoi message', err);
-      showFeedback(feedback, 'error', err.message || 'Impossible d’envoyer le message.');
+    } catch {
+      showFeedback(feedback, 'error', 'Erreur envoi.');
     }
   });
 
-  // Charger fiche + messages au démarrage
   await loadFiche();
   await loadMessages();
 }
