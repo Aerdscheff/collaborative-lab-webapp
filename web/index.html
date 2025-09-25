@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Exo+2:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Roboto', sans-serif; }
-    h1, h2, .font-exo2 { font-family: 'Exo 2', sans-serif; }
+    h1, h2, h3, .font-exo2 { font-family: 'Exo 2', sans-serif; }
 
     @keyframes pulseGlow {
       0%, 100% { box-shadow: 0 0 25px rgba(226,92,92,0.5); }
@@ -25,13 +25,12 @@
     }
     .animate-gradient {
       background-size: 200% 200%;
-      animation: gradientShift 20s ease infinite;
+      animation: gradientShift 25s ease infinite;
     }
 
-    /* Empêche le scroll vertical */
     html, body {
       height: 100%;
-      overflow: hidden;
+      overflow: hidden; /* Pas de scroll */
     }
   </style>
 </head>
@@ -41,7 +40,6 @@
   <header class="absolute top-0 left-0 w-full bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white shadow z-20">
     <nav class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <!-- Logo dans un badge -->
         <div class="bg-white rounded-full p-1">
           <img src="./assets/logo-official.png" alt="Logo Äerdschëff" class="h-8 w-8">
         </div>
@@ -55,33 +53,58 @@
     </nav>
   </header>
 
-  <!-- Hero Section -->
-  <section class="relative h-screen flex items-center justify-center overflow-hidden">
-    <!-- Image de fond -->
-    <img src="./assets/Batiment aerdscheff.png" alt="Bâtiment Äerdschëff"
-         class="absolute inset-0 w-full h-full object-cover">
+  <!-- Conteneur page -->
+  <main class="flex flex-col h-screen">
 
-    <!-- Overlay dégradé atténué -->
-    <div class="absolute inset-0 bg-gradient-to-r from-[#E25C5C]/40 via-purple-600/30 to-[#E25C5C]/40 animate-gradient"></div>
+    <!-- Hero Section (70%) -->
+    <section class="relative h-[70vh] flex items-center justify-center overflow-hidden">
+      <!-- Image de fond -->
+      <img src="./assets/Batiment aerdscheff.png" alt="Bâtiment Äerdschëff"
+           class="absolute inset-0 w-full h-full object-cover">
 
-    <!-- Cercle central -->
-    <div class="relative z-10 flex flex-col items-center justify-center text-center">
-      <div class="w-80 h-80 rounded-full bg-white/85 flex flex-col items-center justify-center animate-glow px-6">
-        <h1 class="text-3xl font-exo2 text-[#E25C5C]">Bienvenue dans</h1>
-        <h2 class="text-2xl font-exo2 text-purple-700 mb-2">Collaborative Lab</h2>
-        <p class="text-sm text-gray-700">
-          Ton espace de cocréation de trames pédagogiques transversales
-        </p>
-        <a href="#/auth"
-           class="mt-6 bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.6)] transition text-lg font-medium flex items-center space-x-2">
-          <span>🚀</span>
-          <span>S’inscrire / Se connecter</span>
-        </a>
+      <!-- Overlay dégradé animé -->
+      <div class="absolute inset-0 bg-gradient-to-r from-[#E25C5C]/40 via-purple-600/30 to-[#E25C5C]/40 animate-gradient"></div>
+
+      <!-- Cercle central -->
+      <div class="relative z-10 flex flex-col items-center justify-center text-center">
+        <div class="w-80 h-80 rounded-full bg-white/85 flex flex-col items-center justify-center animate-glow px-6">
+          <h1 class="text-3xl font-exo2 text-[#E25C5C]">Bienvenue dans</h1>
+          <h2 class="text-2xl font-exo2 text-purple-700 mb-2">Collaborative Lab</h2>
+          <p class="text-sm text-gray-700">
+            Ton espace de cocréation de trames pédagogiques transversales
+          </p>
+          <a href="#/auth"
+             class="mt-4 bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.6)] transition text-lg font-medium flex items-center space-x-2">
+            <span>🚀</span>
+            <span>S’inscrire / Se connecter</span>
+          </a>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Footer (optionnel ou masqué car Hero occupe tout l’écran) -->
+    <!-- Section suivante (30%) -->
+    <section class="relative h-[30vh] flex items-center justify-center overflow-hidden">
+      <!-- Dégradé animé -->
+      <div class="absolute inset-0 bg-gradient-to-r from-[#E25C5C]/20 via-purple-500/20 to-[#E25C5C]/20 animate-gradient"></div>
+      <!-- Texture aquarelle -->
+      <div class="absolute inset-0 opacity-40" style="background-image: url('./assets/aquarelle-texture.png'); background-size: cover;"></div>
+
+      <!-- Texte -->
+      <div class="relative z-10 max-w-4xl mx-auto text-center px-6">
+        <h3 class="text-2xl font-exo2 text-[#E25C5C] mb-3">Qu’est-ce que Collaborative Lab ?</h3>
+        <p class="text-gray-800 text-sm md:text-base leading-relaxed">
+          <strong>Collaborative Lab</strong> est un dispositif éducatif imaginé par Äerdschëff asbl. 
+          Pensé comme un <span class="text-purple-700 font-medium">outil basé sur l’intelligence artificielle</span>, 
+          il facilite le travail collaboratif : entre enseignants, et entre enseignants et intervenants externes.<br><br>
+          Basé sur une <span class="text-[#E25C5C] font-medium">pédagogie de projet</span>, il permet – à partir des compétences du curriculum et des publics visés – 
+          de générer des <span class="text-purple-700 font-medium">trames pédagogiques interdisciplinaires</span>.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
   <footer class="absolute bottom-0 left-0 w-full bg-gray-900 text-white text-center py-2 text-sm opacity-80 z-20">
     © 2025 Äerdschëff · Collaborative Lab
   </footer>
