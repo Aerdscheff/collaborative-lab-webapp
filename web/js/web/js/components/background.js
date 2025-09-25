@@ -17,9 +17,9 @@ export function renderBackground(containerId = 'background') {
     </div>
   `;
 
-  // Ajoute un effet parallaxe léger au scroll
+  // Effet parallaxe doux au scroll
   window.addEventListener('scroll', () => {
-    const offset = window.scrollY * 0.2; // effet subtil
+    const offset = window.scrollY * 0.2;
     const gradientLayer = container.querySelector('.animate-gradient');
     if (gradientLayer) {
       gradientLayer.style.transform = `translateY(${offset}px)`;
