@@ -1,67 +1,63 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Collaborative Lab</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Exo+2:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/background.css">
   <style>
     body { font-family: 'Roboto', sans-serif; }
     h1, h2, .font-exo2 { font-family: 'Exo 2', sans-serif; }
   </style>
 </head>
-<body class="bg-[#fdf7f7] text-gray-800 flex flex-col min-h-screen">
+<body class="relative bg-[#fdf7f7] text-gray-800 flex flex-col min-h-screen overflow-x-hidden">
+
+  <!-- Fond animé -->
+  <div id="background" class="fixed inset-0 -z-10"></div>
 
   <!-- Header -->
-  <header class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white shadow">
+  <header class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white shadow relative z-10">
     <nav class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
       <div class="flex items-center space-x-3">
         <img src="./assets/aerdscheff-logo.png" alt="Logo Äerdschëff" class="h-8">
         <span class="font-exo2 text-lg">Collaborative Lab</span>
       </div>
       <div class="flex space-x-6">
-        <a href="#/fiches" class="transition hover:text-turquoise-300 hover:shadow-[0_0_10px_2px_rgba(64,224,208,0.6)]">Fiches</a>
-        <a href="#/collaborations" class="transition hover:text-turquoise-300 hover:shadow-[0_0_10px_2px_rgba(64,224,208,0.6)]">Collaborations</a>
-        <a href="#/profiles" class="transition hover:text-turquoise-300 hover:shadow-[0_0_10px_2px_rgba(64,224,208,0.6)]">Profil</a>
-        <a href="#/admin" class="transition hover:text-turquoise-300 hover:shadow-[0_0_10px_2px_rgba(64,224,208,0.6)]">Admin</a>
+        <a href="#/fiches" class="hover:text-turquoise transition">Fiches</a>
+        <a href="#/collaborations" class="hover:text-turquoise transition">Collaborations</a>
+        <a href="#/profil" class="hover:text-turquoise transition">Profil</a>
+        <a href="#/admin" class="hover:text-turquoise transition">Admin</a>
       </div>
     </nav>
   </header>
 
-  <!-- Main (Landing) -->
-  <main id="app" class="flex-1">
-    <section class="relative py-20">
-      <!-- Décors latéraux -->
-      <img src="./assets/deco-left.png" alt="Décor gauche"
-           class="absolute left-0 top-20 h-32 opacity-70 pointer-events-none">
-      <img src="./assets/deco-right.png" alt="Décor droite"
-           class="absolute right-0 top-20 h-32 opacity-70 pointer-events-none">
-
-      <!-- Contenu central -->
-      <div class="max-w-3xl mx-auto text-center">
-        <h1 class="text-4xl md:text-5xl font-exo2 font-bold bg-gradient-to-r from-[#E25C5C] to-purple-600 bg-clip-text text-transparent">
-          Bienvenue dans Collaborative Lab
-        </h1>
-        <p class="mt-6 text-gray-700 text-lg">
-          Ton espace de cocréation de trames pédagogiques transversales
-        </p>
-        <a href="#/fiches"
-           class="inline-block mt-10 bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-8 py-3 rounded-lg shadow-md hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.6)] transition text-lg font-medium">
-          🚀 Commencer
-        </a>
-      </div>
+  <!-- Main -->
+  <main id="app" class="flex-1 relative z-10">
+    <section class="relative py-20 text-center">
+      <h1 class="text-5xl font-exo2 font-bold bg-gradient-to-r from-[#E25C5C] to-purple-600 bg-clip-text text-transparent">
+        Bienvenue dans Collaborative Lab
+      </h1>
+      <p class="mt-6 text-lg text-gray-100 drop-shadow">
+        Ton espace de cocréation de trames pédagogiques transversales
+      </p>
+      <a href="#/fiches"
+         class="inline-block mt-10 bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-8 py-3 rounded-lg shadow-md hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.6)] transition text-lg font-medium">
+        🚀 Commencer
+      </a>
     </section>
   </main>
 
   <!-- Footer -->
-  <footer class="bg-gray-900 text-white text-center py-3">
+  <footer class="bg-gray-900 text-white text-center py-3 relative z-10">
     <p class="text-sm opacity-80">© 2025 Äerdschëff · Collaborative Lab</p>
   </footer>
 
-  <!-- Scripts -->
+  <!-- Script -->
   <script type="module">
-    import './js/router.js';
+    import { renderBackground } from './js/components/background.js';
+    renderBackground('background');
   </script>
 </body>
 </html>
