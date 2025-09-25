@@ -1,56 +1,61 @@
 import { supabase } from '../auth.js';
+import { API } from '../api.js';
 import { showFeedback } from '../utils/feedback.js';
 import { renderLayout } from '../layout.js';
 
-export async function render(app, ficheId) {
+export async function render(app) {
+  const params = new URLSearchParams(window.location.hash.split('?')[1]);
+  const ficheId = params.get('id');
+
   let content = `
-    <a href="#/fiches" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded">⬅ Retour</a>
-    <div id="fiche-content" class="my-6"></div>
-    <h2 class="text-xl font-semibold mb-4">💬 Discussion</h2>
-    <div id="messages-feedback" class="mb-4"></div>
-    <div id="messages-list" class="space-y-4 mb-6"></div>
-    <form id="message-form" class="space-y-4">
-      <textarea name="body" rows="3" class="w-full border rounded px-3 py-2"></textarea>
-      <button type="submit" class="bg-[#E25C5C] hover:bg-red-600 text-white px-4 py-2 rounded">Envoyer</button>
+    <h1 class="text-2xl font-bold text-[#E25C5C] mb-6">${ficheId ? '✏️ Modifier une fiche' : '➕ Nouvelle fiche'}</h1>
+    <div id="fiche-feedback" class="mb-4"></div>
+    <form id="fiche-form" class="space-y-4">
+      <input type="text" name="title" placeholder="Titre" class="w-full border rounded px-3 py-2" required />
+      <textarea name="summary" rows="3" placeholder="Résumé" class="w-full border rounded px-3 py-2"></textarea>
+      <textarea name="content" rows="5" placeholder="Contenu détaillé" class="w-full border rounded px-3 py-2"></textarea>
+      <div class="flex justify-end space-x-2">
+        <a href="#/fiches" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded">Annuler</a>
+        <button type="submit" class="bg-[#E25C5C] hover:bg-red-600 text-white px-4 py-2 rounded">${ficheId ? 'Mettre à jour' : 'Créer'}</button>
+      </div>
     </form>
+    <div id="fiche-messages-link" class="mt-6"></div>
   `;
 
   renderLayout(app, content);
 
-  const ficheContainer = document.getElementById('fiche-content');
-  const feedback = document.getElementById('messages-feedback');
-  const list = document.getElementById('messages-list');
-  const form = document.getElementById('message-form');
+  const feedback = document.getElementById('fiche-feedback');
+  const form = document.getElementById('fiche-form');
+  const linkContainer = document.getElementById('fiche-messages-link');
 
-  async function loadFiche() {
+  if (ficheId) {
     try {
-      ficheContainer.innerHTML = `<p>Chargement…</p>`;
-      const { data } = await supabase.from('fiches').select('*').eq('id', ficheId).single();
-      ficheContainer.innerHTML = `
-        <h1 class="text-2xl font-bold text-[#E25C5C]">${data.title}</h1>
-        <p>${data.summary || ''}</p>
-      `;
-    } catch (err) {
-      ficheContainer.innerHTML = `<p class="text-red-500">Erreur chargement fiche</p>`;
-    }
-  }
-
-  async function loadMessages() {
-    try {
-      const { data } = await supabase.from('messages').select('*').eq('fiche_id', ficheId);
-      list.innerHTML = data.map(m => `<div class="border p-3">${m.body}</div>`).join('');
-    } catch (err) {
-      showFeedback(feedback, 'error', 'Erreur chargement messages');
+      const fiche = await API.get(ficheId);
+      if (fiche) {
+        form.title.value = fiche.title || '';
+        form.summary.value = fiche.summary || '';
+        form.content.value = fiche.content || '';
+        linkContainer.innerHTML = `<a href="#/fiches/${ficheId}/messages" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">💬 Voir les messages liés</a>`;
+      }
+    } catch {
+      showFeedback(feedback, 'error', 'Impossible de charger la fiche.');
     }
   }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const body = form.body.value.trim();
-    await supabase.from('messages').insert({ fiche_id: ficheId, body });
-    await loadMessages();
+    const payload = { title: form.title.value, summary: form.summary.value, content: form.content.value };
+    try {
+      if (ficheId) {
+        await API.update(ficheId, payload);
+        showFeedback(feedback, 'success', 'Fiche mise à jour ✅');
+      } else {
+        const res = await API.create(payload);
+        showFeedback(feedback, 'success', 'Fiche créée ✅');
+        linkContainer.innerHTML = `<a href="#/fiches/${res.id}/messages" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">💬 Voir les messages liés</a>`;
+      }
+    } catch {
+      showFeedback(feedback, 'error', 'Erreur enregistrement.');
+    }
   });
-
-  await loadFiche();
-  await loadMessages();
 }
