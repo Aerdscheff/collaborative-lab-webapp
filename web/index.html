@@ -5,49 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Collaborative Lab</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Exo+2:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Roboto', sans-serif; }
+    h1, h2, .font-exo2 { font-family: 'Exo 2', sans-serif; }
+  </style>
 </head>
-<body class="bg-[#fdf7f7] text-gray-800 font-sans flex flex-col min-h-screen">
+<body class="bg-[#fdf7f7] text-gray-800 flex flex-col min-h-screen">
 
   <!-- Header -->
-  <header class="bg-[#E25C5C] text-white shadow">
+  <header class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white shadow">
     <nav class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <img src="./assets/aerdscheff-logo.png" alt="Äerdschëff Logo" class="h-8">
-        <span class="font-bold">Collaborative Lab</span>
+        <img src="./assets/aerdscheff-logo.png" alt="Logo Äerdschëff" class="h-8">
+        <span class="font-exo2 text-lg">Collaborative Lab</span>
       </div>
       <div class="flex space-x-6">
-        <a href="#/fiches" class="hover:text-[#fdf7f7]">Fiches</a>
-        <a href="#/collaborations" class="hover:text-[#fdf7f7]">Collaborations</a>
-        <a href="#/profiles" class="hover:text-[#fdf7f7]">Profil</a>
-        <a href="#/admin" class="hover:text-[#fdf7f7]">Admin</a>
+        <a href="#/fiches" class="transition hover:text-turquoise-300 hover:shadow-glow">Fiches</a>
+        <a href="#/collaborations" class="transition hover:text-turquoise-300 hover:shadow-glow">Collaborations</a>
+        <a href="#/profiles" class="transition hover:text-turquoise-300 hover:shadow-glow">Profil</a>
+        <a href="#/admin" class="transition hover:text-turquoise-300 hover:shadow-glow">Admin</a>
       </div>
     </nav>
   </header>
 
   <!-- Main -->
   <main id="app" class="flex-1">
-    <section class="relative py-12">
-      <!-- Image décorative gauche -->
+    <section class="relative py-16">
+      <!-- Décors latéraux -->
       <img src="./assets/deco-left.png" alt="Décor gauche"
-           class="absolute left-0 top-10 h-32 opacity-80 pointer-events-none">
+           class="absolute left-0 top-20 h-32 opacity-70 pointer-events-none">
+      <img src="./assets/deco-right.png" alt="Décor droite"
+           class="absolute right-0 top-20 h-32 opacity-70 pointer-events-none">
 
-      <!-- Contenu -->
+      <!-- Contenu central -->
       <div class="max-w-3xl mx-auto text-center">
-        <h1 class="text-3xl font-bold text-[#E25C5C]">Bienvenue dans Collaborative Lab</h1>
-        <p class="mt-4 text-gray-700">
+        <h1 class="text-4xl font-exo2 font-bold bg-gradient-to-r from-[#E25C5C] to-purple-600 bg-clip-text text-transparent">
+          Bienvenue dans Collaborative Lab
+        </h1>
+        <p class="mt-6 text-gray-700 text-lg">
           Ton espace de cocréation de trames pédagogiques transversales
         </p>
+        <a href="#/fiches"
+           class="inline-block mt-8 bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-3 rounded-lg shadow-md transition hover:shadow-[0_0_12px_3px_rgba(64,224,208,0.6)]">
+          🚀 Commencer
+        </a>
       </div>
-
-      <!-- Image décorative droite -->
-      <img src="./assets/deco-right.png" alt="Décor droite"
-           class="absolute right-0 top-10 h-32 opacity-80 pointer-events-none">
     </section>
   </main>
 
   <!-- Footer -->
-  <footer class="bg-gray-800 text-white text-center py-3">
-    <p class="text-sm">© 2025 Äerdschëff · Collaborative Lab</p>
+  <footer class="bg-gray-900 text-white text-center py-3">
+    <p class="text-sm opacity-80">© 2025 Äerdschëff · Collaborative Lab</p>
   </footer>
 
   <!-- Scripts -->
