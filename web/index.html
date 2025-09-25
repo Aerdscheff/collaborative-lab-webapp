@@ -3,44 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Collaborative Lab – Äerdschëff</title>
-  <!-- chemin relatif vers style.css -->
-  <link rel="stylesheet" href="./style.css">
+  <title>Ä Collaborative Lab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <!-- HEADER -->
-  <header>
-    <div class="logo">
-      <!-- logo officiel existant dans ton repo -->
-      <img src="./logo-official.png" alt="Äerdschëff Logo">
-      <span>Äerdschëff Lab</span>
-    </div>
-    <nav>
-      <a href="#profil">Mon Profil</a>
-      <a href="#fiches">Fiches</a>
-      <a href="#messages">Messages</a>
-      <a href="#collaborations">Collaborations</a>
-      <a href="#admin">Admin</a>
+<body class="bg-[#fdf7f7] text-gray-800 font-sans flex flex-col min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-[#E25C5C] text-white shadow">
+    <nav class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <img src="./assets/aerdscheff-logo.png" alt="Äerdschëff Logo" class="h-8">
+        <span class="font-bold">Ä Collaborative Lab</span>
+      </div>
+      <div class="flex space-x-6">
+        <a href="#/fiches" class="hover:text-[#fdf7f7]">Fiches</a>
+        <a href="#/collaborations" class="hover:text-[#fdf7f7]">Collaborations</a>
+        <a href="#/profiles" class="hover:text-[#fdf7f7]">Profil</a>
+        <a href="#/admin" class="hover:text-[#fdf7f7]">Admin</a>
+      </div>
     </nav>
   </header>
 
-  <!-- MAIN -->
-  <main>
-    <!-- Le contenu sera remplacé par router.js -->
+  <!-- Main -->
+  <main id="app" class="flex-1">
+    <!-- Exemple de section décorée -->
+    <section class="relative py-12">
+      <!-- Image décorative gauche -->
+      <img src="./assets/deco-left.png" alt="Décor gauche"
+           class="absolute left-0 top-10 h-32 opacity-80 pointer-events-none">
+
+      <!-- Contenu -->
+      <div class="max-w-3xl mx-auto text-center">
+        <h1 class="text-3xl font-bold text-[#E25C5C]">Bienvenue sur le Lab</h1>
+        <p class="mt-4 text-gray-700">
+          Dialogue entre citoyens et experts pour bâtir des solutions concrètes et écologiques.
+        </p>
+      </div>
+
+      <!-- Image décorative droite -->
+      <img src="./assets/deco-right.png" alt="Décor droite"
+           class="absolute right-0 top-10 h-32 opacity-80 pointer-events-none">
+    </section>
   </main>
 
-  <!-- FOOTER -->
-  <footer>
-    <p>© 2025 Äerdschëff asbl – Collaborative Lab</p>
-    <div class="partners">
-      <!-- ici adapte avec les images déjà présentes dans ton dépôt -->
-      <img src="./Batiment aerdscheff.png" alt="Bâtiment Äerdschëff">
-      <img src="./Arbre ampoule.png" alt="Arbre ampoule">
-      <img src="./donat-home.png" alt="Partenaire Donat">
-    </div>
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white text-center py-3">
+    <p class="text-sm">© 2025 Äerdschëff · Collaborative Lab</p>
   </footer>
 
-  <!-- ROUTER : chemin relatif obligatoire -->
-  <script type="module" src="./js/router.js"></script>
+  <!-- Scripts -->
+  <script type="module">
+    import './js/router.js';
+  </script>
 </body>
 </html>
