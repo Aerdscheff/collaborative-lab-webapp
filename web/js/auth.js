@@ -1,56 +1,90 @@
-import { signIn, signUp } from '../auth.js';
-import { showFeedback } from '../utils/feedback.js';
-import { renderLayout } from '../layout.js';
+import { createClient } from '@supabase/supabase-js';
+import { showFeedback } from './utils/feedback.js';
 
-export async function render(app) {
-  let content = `
-    <section class="max-w-md mx-auto bg-white shadow rounded-lg p-6">
-      <h1 class="text-2xl font-bold text-[#E25C5C] mb-4 text-center">🔐 Connexion</h1>
-      <div id="auth-feedback" class="mb-4"></div>
-      <form id="auth-form" class="space-y-4">
-        <input id="auth-email" type="email" placeholder="Email" class="w-full border rounded px-3 py-2" required />
-        <input id="auth-password" type="password" placeholder="Mot de passe" class="w-full border rounded px-3 py-2" required />
-        <div class="flex justify-between items-center">
-          <button type="submit" class="bg-[#E25C5C] hover:bg-red-600 text-white px-4 py-2 rounded">
-            Se connecter
-          </button>
-          <button type="button" id="signup-btn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
-            Créer un compte
-          </button>
-        </div>
-      </form>
-    </section>
-  `;
+// Récupération des variables d'environnement
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-  renderLayout(app, content);
+// Initialisation du client Supabase
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-  const feedback = document.getElementById('auth-feedback');
-  const form = document.getElementById('auth-form');
-  const signupBtn = document.getElementById('signup-btn');
+// Vérification de configuration
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error(
+    "[auth] Variables d'environnement manquantes : VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY."
+  );
+}
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('auth-email').value.trim();
-    const password = document.getElementById('auth-password').value.trim();
-    try {
-      await signIn(email, password, feedback);
-      showFeedback(feedback, 'success', 'Connexion réussie ✅');
-      setTimeout(() => { window.location.hash = '#/fiches'; }, 500);
-    } catch {
-      showFeedback(feedback, 'error', 'Erreur de connexion.');
-    }
-  });
+// === Fonctions d'authentification ===
 
-  signupBtn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('auth-email').value.trim();
-    const password = document.getElementById('auth-password').value.trim();
-    try {
-      await signUp(email, password, feedback);
-      showFeedback(feedback, 'success', 'Compte créé ✅ Vérifiez vos emails.');
-      setTimeout(() => { window.location.hash = '#/login'; }, 500);
-    } catch {
-      showFeedback(feedback, 'error', 'Erreur création compte.');
-    }
-  });
+/**
+ * Connexion avec email + mot de passe
+ */
+export async function login(email, password, feedbackContainer) {
+  try {
+    showFeedback(feedbackContainer, 'info', 'Connexion en cours...');
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    showFeedback(feedbackContainer, 'success', 'Connexion réussie ✅');
+    return data;
+  } catch (err) {
+    console.error('[auth] Échec de connexion', err);
+    showFeedback(feedbackContainer, 'error', err.message || 'Impossible de se connecter.');
+    throw err;
+  }
+}
+
+/**
+ * Inscription avec email + mot de passe
+ */
+export async function signup(email, password, feedbackContainer) {
+  try {
+    showFeedback(feedbackContainer, 'info', 'Création du compte...');
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
+    showFeedback(feedbackContainer, 'success', 'Compte créé ✅ Vérifiez vos emails.');
+    return data;
+  } catch (err) {
+    console.error('[auth] Échec inscription', err);
+    showFeedback(feedbackContainer, 'error', err.message || 'Impossible de créer le compte.');
+    throw err;
+  }
+}
+
+/**
+ * Déconnexion
+ */
+export async function logout(feedbackContainer) {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    showFeedback(feedbackContainer, 'success', 'Vous êtes déconnecté.');
+  } catch (err) {
+    console.error('[auth] Échec déconnexion', err);
+    showFeedback(feedbackContainer, 'error', err.message || 'Impossible de se déconnecter.');
+    throw err;
+  }
+}
+
+/**
+ * Obtenir la session courante
+ */
+export async function getSession() {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    return data.session;
+  } catch (err) {
+    console.error('[auth] Impossible de récupérer la session', err);
+    return null;
+  }
+}
+
+// --- Aliases pour compatibilité avec router.js ---
+export const signIn = login;
+export const signUp = signup;
+
+export async function getJWT() {
+  const session = await getSession();
+  return session?.access_token || null;
 }
