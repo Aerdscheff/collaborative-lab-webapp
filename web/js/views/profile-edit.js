@@ -1,46 +1,44 @@
-export function render(app) {
-  app.innerHTML = `
-    <section class="card">
-      <h2>Modifier mon Profil</h2>
-      <form id="profile-edit-form" class="form">
-        <label>
-          Nom complet :
-          <input type="text" name="name" value="Jean Dupont" required>
-        </label>
-        <label>
-          Email :
-          <input type="email" name="email" disabled value="jean.dupont@example.com">
-        </label>
-        <label>
-          Biographie :
-          <textarea name="bio" rows="4">Enseignant en sciences naturelles passionné par l’écologie.</textarea>
-        </label>
-        <label>
-          Niveaux / âges :
-          <input type="text" name="levels" value="Primaire">
-        </label>
-        <label>
-          Disciplines :
-          <input type="text" name="disciplines" value="Sciences naturelles">
-        </label>
-        <label>
-          Objectifs de Développement Durable (ODD) :
-          <input type="text" name="odd" value="ODD 4, ODD 15">
-        </label>
-        <div class="actions">
-          <button type="submit">💾 Sauvegarder</button>
-          <button type="button" id="back">↩️ Retour</button>
-        </div>
-      </form>
-    </section>
+import { supabase } from '../auth.js';
+import { getProfile } from '../api.js';
+import { showFeedback } from '../utils/feedback.js';
+import { renderLayout } from '../layout.js';
+
+export async function render(app, userId) {
+  let content = `
+    <h1 class="text-2xl font-bold text-[#E25C5C] mb-6">✏️ Modifier le profil</h1>
+    <div id="profile-feedback"></div>
+    <form id="profile-form" class="space-y-4">
+      <input type="text" name="name" placeholder="Nom" class="w-full border rounded px-3 py-2" />
+      <input type="email" name="email" class="w-full border rounded px-3 py-2" disabled />
+      <textarea name="bio" rows="3" placeholder="Bio" class="w-full border rounded px-3 py-2"></textarea>
+      <button type="submit" class="bg-[#E25C5C] hover:bg-red-600 text-white px-4 py-2 rounded">Enregistrer</button>
+    </form>
   `;
 
-  document.getElementById("profile-edit-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    alert("Modifications enregistrées !");
-  });
+  renderLayout(app, content);
 
-  document.getElementById("back").addEventListener("click", () => {
-    window.location.hash = "#profil";
+  const feedback = document.getElementById('profile-feedback');
+  const form = document.getElementById('profile-form');
+
+  try {
+    const profile = await getProfile(userId);
+    if (profile) {
+      form.name.value = profile.name || '';
+      form.email.value = profile.email || '';
+      form.bio.value = profile.bio || '';
+    }
+  } catch {
+    showFeedback(feedback, 'error', 'Erreur chargement profil.');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = { name: form.name.value.trim(), bio: form.bio.value.trim() };
+    try {
+      await supabase.from('profiles').update(payload).eq('id', userId);
+      showFeedback(feedback, 'success', 'Profil mis à jour ✅');
+    } catch {
+      showFeedback(feedback, 'error', 'Erreur mise à jour.');
+    }
   });
 }
