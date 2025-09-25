@@ -1,58 +1,66 @@
-import { signIn, signUp } from '../auth.js';
-import { showFeedback } from '../utils/feedback.js';
-import { renderLayout } from '../layout.js';
+import { createClient } from '@supabase/supabase-js';
+import { showFeedback } from './utils/feedback.js'; //
 
-export async function render(app) {
-  const content = `
-    <section class="max-w-md mx-auto bg-white shadow rounded-lg p-6">
-      <h1 class="text-3xl font-exo2 text-[#E25C5C] mb-6 text-center">🔐 Connexion</h1>
-      <div id="auth-feedback" class="mb-4"></div>
-      <form id="auth-form" class="space-y-4">
-        <input id="auth-email" type="email" placeholder="Email"
-          class="w-full border rounded px-3 py-2" required />
-        <input id="auth-password" type="password" placeholder="Mot de passe"
-          class="w-full border rounded px-3 py-2" required />
-        <div class="flex justify-between items-center">
-          <button type="submit"
-            class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-[0_0_10px_2px_rgba(64,224,208,0.6)] transition">
-            Se connecter
-          </button>
-          <button type="button" id="signup-btn"
-            class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
-            Créer un compte
-          </button>
-        </div>
-      </form>
-    </section>
-  `;
-  renderLayout(app, content);
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-  const feedback = document.getElementById('auth-feedback');
-  const form = document.getElementById('auth-form');
-  const signupBtn = document.getElementById('signup-btn');
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('auth-email').value.trim();
-    const password = document.getElementById('auth-password').value.trim();
-    try {
-      await signIn(email, password, feedback);
-      showFeedback(feedback, 'success', 'Connexion réussie ✅');
-      setTimeout(() => { window.location.hash = '#/fiches'; }, 500);
-    } catch {
-      showFeedback(feedback, 'error', 'Erreur de connexion.');
-    }
-  });
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("[auth] Variables manquantes : VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY");
+}
 
-  signupBtn.addEventListener('click', async () => {
-    const email = document.getElementById('auth-email').value.trim();
-    const password = document.getElementById('auth-password').value.trim();
-    try {
-      await signUp(email, password, feedback);
-      showFeedback(feedback, 'success', 'Compte créé ✅ Vérifiez vos emails.');
-      setTimeout(() => { window.location.hash = '#/login'; }, 500);
-    } catch {
-      showFeedback(feedback, 'error', 'Erreur création de compte.');
-    }
-  });
+export async function login(email, password, feedbackContainer) {
+  try {
+    showFeedback(feedbackContainer, 'info', 'Connexion en cours...');
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    showFeedback(feedbackContainer, 'success', 'Connexion réussie ✅');
+    return data;
+  } catch (err) {
+    showFeedback(feedbackContainer, 'error', err.message || 'Connexion impossible.');
+    throw err;
+  }
+}
+
+export async function signup(email, password, feedbackContainer) {
+  try {
+    showFeedback(feedbackContainer, 'info', 'Création du compte…');
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
+    showFeedback(feedbackContainer, 'success', 'Compte créé ✅ Vérifiez vos emails.');
+    return data;
+  } catch (err) {
+    showFeedback(feedbackContainer, 'error', err.message || 'Création impossible.');
+    throw err;
+  }
+}
+
+export async function logout(feedbackContainer) {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    showFeedback(feedbackContainer, 'success', 'Vous êtes déconnecté.');
+  } catch (err) {
+    showFeedback(feedbackContainer, 'error', err.message || 'Déconnexion impossible.');
+    throw err;
+  }
+}
+
+export async function getSession() {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    return data.session;
+  } catch {
+    return null;
+  }
+}
+
+export const signIn = login;
+export const signUp = signup;
+
+export async function getJWT() {
+  const session = await getSession();
+  return session?.access_token || null;
 }
