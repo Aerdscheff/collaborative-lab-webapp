@@ -69,23 +69,47 @@
   <!-- Header -->
   <header class="absolute top-4 left-1/2 transform -translate-x-1/2 w-[95%] bg-gradient-to-r from-[#E25C5C]/90 to-purple-600/90 backdrop-blur-sm rounded-xl text-white shadow z-20">
     <nav class="max-w-6xl mx-auto px-6 py-2 flex items-center justify-between">
-      <div class="flex items-center space-x-2 clickable cursor-pointer" onclick="location.hash='#/fiches'">
+      <div class="flex items-center space-x-2 clickable cursor-pointer">
         <div class="bg-white rounded-xl p-1">
           <img src="./assets/logo-official.png" alt="Logo Äerdschëff" class="h-6 w-6 rounded-xl">
         </div>
-        <span class="font-exo2 text-base">Collaborative Lab</span>
+        <a href="#home" class="font-exo2 text-base">Collaborative Lab</a>
       </div>
       <div class="flex space-x-6 text-sm font-medium">
-        <a href="#/fiches" class="clickable px-2 py-1">Fiches</a>
-        <a href="#/collaborations" class="clickable px-2 py-1">Collaborations</a>
-        <a href="#/profil" class="clickable px-2 py-1">Profil</a>
+        <a href="#fiches" class="clickable px-2 py-1">Fiches</a>
+        <a href="#collaborations" class="clickable px-2 py-1">Collaborations</a>
+        <a href="#profil" class="clickable px-2 py-1">Profil</a>
       </div>
     </nav>
   </header>
 
-  <!-- Hero + router container -->
+  <!-- Container principal piloté par le router -->
   <main id="app" class="flex flex-col h-screen pt-20">
-    <!-- Le contenu des vues sera injecté ici -->
+    <!-- Le contenu des vues (home, fiches, etc.) sera injecté ici -->
+    <!-- Hero cercle visible par défaut si #home -->
+    <section class="relative h-[70vh] flex items-center justify-center overflow-visible">
+      <img src="./assets/Batiment aerdscheff.png" alt="Bâtiment Äerdschëff"
+           class="absolute inset-0 w-full h-full object-cover">
+      <div class="absolute inset-0 bg-gradient-to-r from-[#E25C5C]/40 via-purple-600/30 to-[#E25C5C]/40 animate-gradient"></div>
+      <div class="relative z-10 flex flex-col items-center justify-center text-center">
+        <div class="w-[18rem] h-[18rem] md:w-[22rem] md:h-[22rem] rounded-full relative flex flex-col items-center justify-center px-8 animate-glow breathing"
+             style="background: radial-gradient(circle, rgba(255,255,255,0.95) 70%, rgba(255,255,255,0.75) 100%); box-shadow: 0 0 55px 20px rgba(255,255,255,0.5), 0 0 85px 30px rgba(255,255,255,0.4);">
+          <div class="absolute inset-0 rounded-full opacity-15"
+               style="background-image: url('./assets/aquarelle-texture.png'); background-size: cover; mix-blend-mode: overlay;"></div>
+          <div class="relative z-10 text-center">
+            <h1 class="text-2xl md:text-3xl font-exo2 text-[#E25C5C]">Bienvenue dans</h1>
+            <h2 class="text-xl md:text-2xl font-exo2 text-purple-700 mb-2">Collaborative Lab</h2>
+            <p class="text-sm text-gray-700">
+              Ton espace de cocréation de trames pédagogiques transversales
+            </p>
+            <a href="#home"
+               class="mt-4 inline-flex justify-center items-center bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-2 rounded-xl shadow-md transition text-base font-medium clickable">
+              🚀 <span class="ml-2">S’inscrire / Se connecter</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="absolute bottom-0 left-0 w-full bg-gray-900 text-white text-center py-2 text-xs md:text-sm opacity-80 z-20">
