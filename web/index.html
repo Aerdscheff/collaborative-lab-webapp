@@ -28,7 +28,6 @@
       animation: gradientShift 25s ease infinite;
     }
 
-    /* Animation fade-in + scale */
     @keyframes fadeInUpScale {
       from { opacity: 0; transform: translateY(20px) scale(0.95); }
       to { opacity: 1; transform: translateY(0) scale(1); }
@@ -37,11 +36,15 @@
       opacity: 0;
       animation: fadeInUpScale 1s ease-out forwards;
     }
-    .fade-in.delay-1 {
-      animation-delay: 0.3s;
+    .fade-in.delay-1 { animation-delay: 0.3s; }
+    .fade-in.delay-2 { animation-delay: 0.6s; }
+
+    @keyframes breathing {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(0.985); }
     }
-    .fade-in.delay-2 {
-      animation-delay: 0.6s;
+    .breathing {
+      animation: breathing 6s ease-in-out infinite;
     }
 
     html, body {
@@ -72,8 +75,8 @@
   <!-- Conteneur page -->
   <main class="flex flex-col h-screen">
 
-    <!-- Hero Section -->
-    <section class="relative h-[60vh] md:h-[55vh] flex items-center justify-center overflow-hidden">
+    <!-- Hero Section (70%) -->
+    <section class="relative h-[70vh] flex items-center justify-center overflow-hidden">
       <!-- Image de fond -->
       <img src="./assets/Batiment aerdscheff.png" alt="Bâtiment Äerdschëff"
            class="absolute inset-0 w-full h-full object-cover">
@@ -81,16 +84,16 @@
       <!-- Overlay dégradé animé -->
       <div class="absolute inset-0 bg-gradient-to-r from-[#E25C5C]/40 via-purple-600/30 to-[#E25C5C]/40 animate-gradient"></div>
 
-      <!-- Cercle central -->
+      <!-- Cercle central élargi -->
       <div class="relative z-10 flex flex-col items-center justify-center text-center">
-        <div class="w-72 h-72 md:w-80 md:h-80 rounded-full bg-white/85 flex flex-col items-center justify-center animate-glow px-6">
-          <h1 class="text-2xl md:text-3xl font-exo2 text-[#E25C5C]">Bienvenue dans</h1>
-          <h2 class="text-lg md:text-2xl font-exo2 text-purple-700 mb-2">Collaborative Lab</h2>
-          <p class="text-xs md:text-sm text-gray-700">
+        <div class="w-96 h-96 rounded-full bg-white/85 flex flex-col items-center justify-center animate-glow px-8">
+          <h1 class="text-3xl font-exo2 text-[#E25C5C]">Bienvenue dans</h1>
+          <h2 class="text-2xl font-exo2 text-purple-700 mb-2">Collaborative Lab</h2>
+          <p class="text-sm text-gray-700">
             Ton espace de cocréation de trames pédagogiques transversales
           </p>
           <a href="#/auth"
-             class="mt-4 bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg shadow-md hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.6)] transition text-sm md:text-lg font-medium flex items-center space-x-2">
+             class="mt-6 bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.6)] transition text-lg font-medium flex items-center space-x-2">
             <span>🚀</span>
             <span>S’inscrire / Se connecter</span>
           </a>
@@ -98,28 +101,24 @@
       </div>
     </section>
 
-    <!-- Section suivante -->
-    <section class="relative h-[40vh] md:h-[45vh] overflow-hidden flex items-center justify-center">
+    <!-- Section suivante (30%) -->
+    <section class="relative h-[30vh] overflow-hidden flex items-center justify-center">
       <!-- Dégradé animé -->
       <div class="absolute inset-0 bg-gradient-to-r from-[#E25C5C]/20 via-purple-500/20 to-[#E25C5C]/20 animate-gradient"></div>
       <!-- Texture aquarelle -->
       <div class="absolute inset-0 opacity-40" style="background-image: url('./assets/aquarelle-texture.png'); background-size: cover;"></div>
 
-      <!-- Texte avec stagger fade-in+scale -->
-      <div class="relative z-10 max-w-5xl mx-auto px-6 text-center md:text-left">
-        <h3 class="fade-in text-lg md:text-2xl font-exo2 text-[#E25C5C] mb-4 text-center">Qu’est-ce que Collaborative Lab ?</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs md:text-base text-gray-800 leading-relaxed">
-          <p class="fade-in delay-1">
-            <strong>Collaborative Lab</strong> est un dispositif éducatif imaginé par Äerdschëff asbl. 
-            Pensé comme un <span class="text-purple-700 font-medium">outil basé sur l’intelligence artificielle</span>, 
-            il facilite le travail collaboratif entre enseignants, et entre enseignants et intervenants externes.
-          </p>
-          <p class="fade-in delay-2">
-            Basé sur une <span class="text-[#E25C5C] font-medium">pédagogie de projet</span>, 
-            il génère des <span class="text-purple-700 font-medium">trames pédagogiques interdisciplinaires</span> 
-            à partir des compétences du curriculum et des publics visés.
-          </p>
-        </div>
+      <!-- Texte unique centré -->
+      <div class="relative z-10 max-w-4xl mx-auto px-6 text-center fade-in delay-1 breathing">
+        <h3 class="text-xl md:text-2xl font-exo2 text-[#E25C5C] mb-3">Qu’est-ce que Collaborative Lab ?</h3>
+        <p class="text-sm md:text-base text-gray-800 leading-relaxed">
+          <strong>Collaborative Lab</strong> est un dispositif éducatif imaginé par Äerdschëff asbl. 
+          Pensé comme un <span class="text-purple-700 font-medium">outil basé sur l’intelligence artificielle</span>, 
+          il facilite le travail collaboratif entre enseignants, et entre enseignants et intervenants externes.<br><br>
+          Basé sur une <span class="text-[#E25C5C] font-medium">pédagogie de projet</span>, il génère des 
+          <span class="text-purple-700 font-medium">trames pédagogiques interdisciplinaires</span> 
+          à partir des compétences du curriculum et des publics visés.
+        </p>
       </div>
     </section>
 
