@@ -28,6 +28,15 @@
       animation: gradientShift 25s ease infinite;
     }
 
+    /* Animation fade-in */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      animation: fadeInUp 1.2s ease-out forwards;
+    }
+
     html, body {
       height: 100%;
       overflow: hidden; /* Pas de scroll */
@@ -89,8 +98,8 @@
       <!-- Texture aquarelle -->
       <div class="absolute inset-0 opacity-40" style="background-image: url('./assets/aquarelle-texture.png'); background-size: cover;"></div>
 
-      <!-- Texte -->
-      <div class="relative z-10 max-w-5xl mx-auto px-6 text-center md:text-left">
+      <!-- Texte avec fade-in -->
+      <div class="relative z-10 max-w-5xl mx-auto px-6 text-center md:text-left fade-in">
         <h3 class="text-lg md:text-2xl font-exo2 text-[#E25C5C] mb-4 text-center">Qu’est-ce que Collaborative Lab ?</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs md:text-base text-gray-800 leading-relaxed">
           <p>
