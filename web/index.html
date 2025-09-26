@@ -28,13 +28,20 @@
       animation: gradientShift 25s ease infinite;
     }
 
-    /* Animation fade-in */
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Animation fade-in + scale */
+    @keyframes fadeInUpScale {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
     .fade-in {
-      animation: fadeInUp 1.2s ease-out forwards;
+      opacity: 0;
+      animation: fadeInUpScale 1s ease-out forwards;
+    }
+    .fade-in.delay-1 {
+      animation-delay: 0.3s;
+    }
+    .fade-in.delay-2 {
+      animation-delay: 0.6s;
     }
 
     html, body {
@@ -98,16 +105,16 @@
       <!-- Texture aquarelle -->
       <div class="absolute inset-0 opacity-40" style="background-image: url('./assets/aquarelle-texture.png'); background-size: cover;"></div>
 
-      <!-- Texte avec fade-in -->
-      <div class="relative z-10 max-w-5xl mx-auto px-6 text-center md:text-left fade-in">
-        <h3 class="text-lg md:text-2xl font-exo2 text-[#E25C5C] mb-4 text-center">Qu’est-ce que Collaborative Lab ?</h3>
+      <!-- Texte avec stagger fade-in+scale -->
+      <div class="relative z-10 max-w-5xl mx-auto px-6 text-center md:text-left">
+        <h3 class="fade-in text-lg md:text-2xl font-exo2 text-[#E25C5C] mb-4 text-center">Qu’est-ce que Collaborative Lab ?</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs md:text-base text-gray-800 leading-relaxed">
-          <p>
+          <p class="fade-in delay-1">
             <strong>Collaborative Lab</strong> est un dispositif éducatif imaginé par Äerdschëff asbl. 
             Pensé comme un <span class="text-purple-700 font-medium">outil basé sur l’intelligence artificielle</span>, 
             il facilite le travail collaboratif entre enseignants, et entre enseignants et intervenants externes.
           </p>
-          <p>
+          <p class="fade-in delay-2">
             Basé sur une <span class="text-[#E25C5C] font-medium">pédagogie de projet</span>, 
             il génère des <span class="text-purple-700 font-medium">trames pédagogiques interdisciplinaires</span> 
             à partir des compétences du curriculum et des publics visés.
