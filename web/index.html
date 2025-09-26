@@ -18,14 +18,12 @@
       animation: pulseGlow 6s ease-in-out infinite;
     }
 
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+    @keyframes breathing {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(0.985); }
     }
-    .animate-gradient {
-      background-size: 200% 200%;
-      animation: gradientShift 25s ease infinite;
+    .breathing {
+      animation: breathing 6s ease-in-out infinite;
     }
 
     @keyframes fadeInUpScale {
@@ -36,15 +34,15 @@
       opacity: 0;
       animation: fadeInUpScale 1s ease-out forwards;
     }
-    .fade-in.delay-1 { animation-delay: 0.3s; }
-    .fade-in.delay-2 { animation-delay: 0.6s; }
 
-    @keyframes breathing {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(0.985); }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
-    .breathing {
-      animation: breathing 6s ease-in-out infinite;
+    .animate-gradient {
+      background-size: 200% 200%;
+      animation: gradientShift 25s ease infinite;
     }
 
     html, body {
@@ -84,9 +82,9 @@
       <!-- Overlay dégradé animé -->
       <div class="absolute inset-0 bg-gradient-to-r from-[#E25C5C]/40 via-purple-600/30 to-[#E25C5C]/40 animate-gradient"></div>
 
-      <!-- Cercle central élargi -->
+      <!-- Cercle central avec glow + breathing -->
       <div class="relative z-10 flex flex-col items-center justify-center text-center">
-        <div class="w-96 h-96 rounded-full bg-white/85 flex flex-col items-center justify-center animate-glow px-8">
+        <div class="w-96 h-96 rounded-full bg-white/85 flex flex-col items-center justify-center animate-glow breathing px-8">
           <h1 class="text-3xl font-exo2 text-[#E25C5C]">Bienvenue dans</h1>
           <h2 class="text-2xl font-exo2 text-purple-700 mb-2">Collaborative Lab</h2>
           <p class="text-sm text-gray-700">
@@ -108,8 +106,8 @@
       <!-- Texture aquarelle -->
       <div class="absolute inset-0 opacity-40" style="background-image: url('./assets/aquarelle-texture.png'); background-size: cover;"></div>
 
-      <!-- Texte unique centré -->
-      <div class="relative z-10 max-w-4xl mx-auto px-6 text-center fade-in delay-1 breathing">
+      <!-- Texte centré -->
+      <div class="relative z-10 max-w-4xl mx-auto px-6 text-center fade-in">
         <h3 class="text-xl md:text-2xl font-exo2 text-[#E25C5C] mb-3">Qu’est-ce que Collaborative Lab ?</h3>
         <p class="text-sm md:text-base text-gray-800 leading-relaxed">
           <strong>Collaborative Lab</strong> est un dispositif éducatif imaginé par Äerdschëff asbl. 
