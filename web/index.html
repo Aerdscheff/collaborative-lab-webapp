@@ -49,6 +49,19 @@
       height: 100%;
       overflow: hidden; /* Pas de scroll */
     }
+
+    /* Halo sur les éléments cliquables */
+    .clickable {
+      transition: box-shadow 0.3s ease, transform 0.2s ease;
+    }
+    .clickable:hover {
+      box-shadow: 0 0 15px rgba(226,92,92,0.6), 0 0 25px rgba(147,112,219,0.5);
+      transform: scale(1.05);
+    }
+    .clickable:active {
+      box-shadow: 0 0 20px rgba(226,92,92,0.8), 0 0 30px rgba(147,112,219,0.6);
+      transform: scale(0.98);
+    }
   </style>
 </head>
 <body class="bg-[#fdf7f7] text-gray-800 flex flex-col min-h-screen">
@@ -57,7 +70,7 @@
   <header class="absolute top-4 left-1/2 transform -translate-x-1/2 w-[95%] bg-gradient-to-r from-[#E25C5C]/90 to-purple-600/90 backdrop-blur-sm rounded-full text-white shadow z-20">
     <nav class="max-w-6xl mx-auto px-6 py-2 flex items-center justify-between">
       <!-- Logo + texte -->
-      <div class="flex items-center space-x-2">
+      <div class="flex items-center space-x-2 clickable cursor-pointer">
         <div class="bg-white rounded-full p-1">
           <img src="./assets/logo-official.png" alt="Logo Äerdschëff" class="h-6 w-6">
         </div>
@@ -65,9 +78,9 @@
       </div>
       <!-- Menu -->
       <div class="flex space-x-6 text-sm font-medium">
-        <a href="#/fiches" class="hover:text-turquoise-300 transition">Fiches</a>
-        <a href="#/collaborations" class="hover:text-turquoise-300 transition">Collaborations</a>
-        <a href="#/profil" class="hover:text-turquoise-300 transition">Profil</a>
+        <a href="#/fiches" class="clickable px-2 py-1 rounded-md">Fiches</a>
+        <a href="#/collaborations" class="clickable px-2 py-1 rounded-md">Collaborations</a>
+        <a href="#/profil" class="clickable px-2 py-1 rounded-md">Profil</a>
       </div>
     </nav>
   </header>
@@ -101,7 +114,7 @@
               Ton espace de cocréation de trames pédagogiques transversales
             </p>
             <a href="#/auth"
-               class="mt-4 inline-flex justify-center items-center bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-2 rounded-lg shadow-md hover:shadow-[0_0_15px_3px_rgba(226,92,92,0.6)] transition text-base font-medium">
+               class="mt-4 inline-flex justify-center items-center bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-2 rounded-lg shadow-md hover:shadow-[0_0_15px_3px_rgba(226,92,92,0.6)] transition text-base font-medium clickable">
               🚀 <span class="ml-2">S’inscrire / Se connecter</span>
             </a>
           </div>
@@ -120,21 +133,4 @@
       <div class="relative z-10 max-w-4xl mx-auto px-6 text-center fade-in">
         <h3 class="text-xl md:text-2xl font-exo2 text-[#E25C5C] mb-3">Qu’est-ce que Collaborative Lab ?</h3>
         <p class="text-sm md:text-base text-gray-800 leading-relaxed">
-          <strong>Collaborative Lab</strong> est un dispositif éducatif imaginé par Äerdschëff asbl. 
-          Pensé comme un <span class="text-purple-700 font-medium">outil basé sur l’intelligence artificielle</span>, 
-          il facilite le travail collaboratif entre enseignants, et entre enseignants et intervenants externes.<br><br>
-          Basé sur une <span class="text-[#E25C5C] font-medium">pédagogie de projet</span>, il génère des 
-          <span class="text-purple-700 font-medium">trames pédagogiques interdisciplinaires</span> 
-          à partir des compétences du curriculum et des publics visés.
-        </p>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- Footer -->
-  <footer class="absolute bottom-0 left-0 w-full bg-gray-900 text-white text-center py-2 text-xs md:text-sm opacity-80 z-20">
-    © 2025 Äerdschëff asbl · Collaborative Lab
-  </footer>
-</body>
-</html>
+          <strong>Collaborative Lab</strong> est un dispositif éducatif imaginé par Äerdschëff as
