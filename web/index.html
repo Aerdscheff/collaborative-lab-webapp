@@ -53,6 +53,7 @@
     /* Halo cliquables en blanc */
     .clickable {
       transition: box-shadow 0.3s ease, transform 0.2s ease;
+      border-radius: 0.75rem; /* = rounded-xl */
     }
     .clickable:hover {
       box-shadow: 0 0 25px rgba(255,255,255,0.9), 0 0 55px rgba(255,255,255,0.7);
@@ -71,16 +72,16 @@
     <nav class="max-w-6xl mx-auto px-6 py-2 flex items-center justify-between">
       <!-- Logo + texte -->
       <div class="flex items-center space-x-2 clickable cursor-pointer">
-        <div class="bg-white rounded-full p-1">
-          <img src="./assets/logo-official.png" alt="Logo Äerdschëff" class="h-6 w-6">
+        <div class="bg-white rounded-xl p-1">
+          <img src="./assets/logo-official.png" alt="Logo Äerdschëff" class="h-6 w-6 rounded-xl">
         </div>
         <span class="font-exo2 text-base">Collaborative Lab</span>
       </div>
       <!-- Menu -->
       <div class="flex space-x-6 text-sm font-medium">
-        <a href="#/fiches" class="clickable px-2 py-1 rounded-md">Fiches</a>
-        <a href="#/collaborations" class="clickable px-2 py-1 rounded-md">Collaborations</a>
-        <a href="#/profil" class="clickable px-2 py-1 rounded-md">Profil</a>
+        <a href="#/fiches" class="clickable px-2 py-1">Fiches</a>
+        <a href="#/collaborations" class="clickable px-2 py-1">Collaborations</a>
+        <a href="#/profil" class="clickable px-2 py-1">Profil</a>
       </div>
     </nav>
   </header>
@@ -114,7 +115,7 @@
               Ton espace de cocréation de trames pédagogiques transversales
             </p>
             <a href="#/auth"
-               class="mt-4 inline-flex justify-center items-center bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-2 rounded-lg shadow-md transition text-base font-medium clickable">
+               class="mt-4 inline-flex justify-center items-center bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-2 rounded-xl shadow-md transition text-base font-medium clickable">
               🚀 <span class="ml-2">S’inscrire / Se connecter</span>
             </a>
           </div>
