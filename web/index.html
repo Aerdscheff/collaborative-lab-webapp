@@ -45,12 +45,32 @@
         </div>
         <span class="font-exo2 text-lg">Collaborative Lab</span>
       </div>
-      <div class="flex space-x-6">
+
+      <!-- Menu desktop -->
+      <div class="hidden md:flex space-x-6">
         <a href="#/fiches" class="hover:text-turquoise-300 transition">Fiches</a>
         <a href="#/collaborations" class="hover:text-turquoise-300 transition">Collaborations</a>
         <a href="#/profil" class="hover:text-turquoise-300 transition">Profil</a>
       </div>
+
+      <!-- Bouton burger mobile -->
+      <div class="md:hidden">
+        <button id="menu-toggle" class="focus:outline-none">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
     </nav>
+
+    <!-- Menu mobile -->
+    <div id="menu-mobile" class="hidden flex-col bg-purple-700 text-white px-6 py-4 space-y-3 md:hidden">
+      <a href="#/fiches" class="block hover:text-turquoise-300">Fiches</a>
+      <a href="#/collaborations" class="block hover:text-turquoise-300">Collaborations</a>
+      <a href="#/profil" class="block hover:text-turquoise-300">Profil</a>
+    </div>
   </header>
 
   <!-- Conteneur page -->
@@ -67,16 +87,16 @@
 
       <!-- Cercle central -->
       <div class="relative z-10 flex flex-col items-center justify-center text-center">
-        <div class="w-80 h-80 rounded-full bg-white/85 flex flex-col items-center justify-center animate-glow px-6">
-          <h1 class="text-3xl font-exo2 text-[#E25C5C]">Bienvenue dans</h1>
-          <h2 class="text-2xl font-exo2 text-purple-700 mb-2">Collaborative Lab</h2>
-          <p class="text-sm text-gray-700">
+        <div class="w-60 h-60 md:w-80 md:h-80 rounded-full bg-white/85 flex flex-col items-center justify-center animate-glow px-4 md:px-6">
+          <h1 class="text-xl md:text-3xl font-exo2 text-[#E25C5C]">Bienvenue dans</h1>
+          <h2 class="text-lg md:text-2xl font-exo2 text-purple-700 mb-1 md:mb-2">Collaborative Lab</h2>
+          <p class="text-xs md:text-sm text-gray-700">
             Ton espace de cocréation de trames pédagogiques transversales
           </p>
           <a href="#/auth"
-             class="mt-4 bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.6)] transition text-lg font-medium flex items-center space-x-2">
+             class="mt-3 md:mt-4 bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg shadow-md hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.6)] transition text-sm md:text-lg font-medium flex items-center space-x-1 md:space-x-2">
             <span>🚀</span>
-            <span>S’inscrire / Se connecter</span>
+            <span>S’inscrire</span>
           </a>
         </div>
       </div>
@@ -90,14 +110,15 @@
       <div class="absolute inset-0 opacity-40" style="background-image: url('./assets/aquarelle-texture.png'); background-size: cover;"></div>
 
       <!-- Texte -->
-      <div class="relative z-10 max-w-4xl mx-auto text-center px-6">
-        <h3 class="text-2xl font-exo2 text-[#E25C5C] mb-3">Qu’est-ce que Collaborative Lab ?</h3>
-        <p class="text-gray-800 text-sm md:text-base leading-relaxed">
+      <div class="relative z-10 max-w-3xl mx-auto text-center px-4">
+        <h3 class="text-lg md:text-2xl font-exo2 text-[#E25C5C] mb-2">Qu’est-ce que Collaborative Lab ?</h3>
+        <p class="text-xs md:text-base text-gray-800 leading-relaxed">
           <strong>Collaborative Lab</strong> est un dispositif éducatif imaginé par Äerdschëff asbl. 
           Pensé comme un <span class="text-purple-700 font-medium">outil basé sur l’intelligence artificielle</span>, 
-          il facilite le travail collaboratif : entre enseignants, et entre enseignants et intervenants externes.<br><br>
-          Basé sur une <span class="text-[#E25C5C] font-medium">pédagogie de projet</span>, il permet – à partir des compétences du curriculum et des publics visés – 
-          de générer des <span class="text-purple-700 font-medium">trames pédagogiques interdisciplinaires</span>.
+          il facilite le travail collaboratif entre enseignants, et entre enseignants et intervenants externes. 
+          Basé sur une <span class="text-[#E25C5C] font-medium">pédagogie de projet</span>, il génère des 
+          <span class="text-purple-700 font-medium">trames pédagogiques interdisciplinaires</span> 
+          à partir des compétences du curriculum et des publics visés.
         </p>
       </div>
     </section>
@@ -105,8 +126,18 @@
   </main>
 
   <!-- Footer -->
-  <footer class="absolute bottom-0 left-0 w-full bg-gray-900 text-white text-center py-2 text-sm opacity-80 z-20">
+  <footer class="absolute bottom-0 left-0 w-full bg-gray-900 text-white text-center py-2 text-xs md:text-sm opacity-80 z-20">
     © 2025 Äerdschëff · Collaborative Lab
   </footer>
+
+  <!-- Script burger -->
+  <script>
+    const toggle = document.getElementById('menu-toggle');
+    const menu = document.getElementById('menu-mobile');
+    toggle.addEventListener('click', () => {
+      menu.classList.toggle('hidden');
+      menu.classList.add('transition', 'duration-300', 'ease-in-out');
+    });
+  </script>
 </body>
 </html>
