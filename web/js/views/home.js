@@ -1,8 +1,7 @@
-// /web/js/views/home.js
 export function render(app) {
   app.innerHTML = `
     <section class="relative h-[70vh] flex items-center justify-center overflow-visible">
-      <img src="./assets/Batiment aerdscheff.png" alt="Bâtiment Äerdschëff"
+      <img src="./assets/batiment-aerdscheff.png" alt="Bâtiment Äerdschëff"
            class="absolute inset-0 w-full h-full object-cover">
       <div class="absolute inset-0 bg-gradient-to-r from-[#E25C5C]/40 via-purple-600/30 to-[#E25C5C]/40 animate-gradient"></div>
       <div class="relative z-10 flex flex-col items-center justify-center text-center">
