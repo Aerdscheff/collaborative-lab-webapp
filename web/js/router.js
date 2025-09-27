@@ -12,23 +12,14 @@ import { render as renderAuth } from "./views/auth.js";
 
 // Helpers
 import { requireAuth, requireAdmin } from "./authGuard.js";
+import { showGlobalLoader, fadeIn } from "./utils/ui.js";
 
-// Loader + animation fade-in
-function showLoader(app) {
-  app.innerHTML = `
-    <div class="loader flex items-center justify-center h-full">
-      <div class="spinner animate-spin h-10 w-10 border-4 border-t-transparent border-purple-600 rounded-full"></div>
-    </div>
-  `;
-}
-
+// Render avec loader + animation
 function withFadeIn(renderFn, app, ...args) {
-  showLoader(app);
+  showGlobalLoader(app);
   setTimeout(async () => {
     await renderFn(app, ...args);
-    app.classList.remove("fade-in");
-    void app.offsetWidth; // reset animation
-    app.classList.add("fade-in");
+    fadeIn(app);
   }, 300);
 }
 
@@ -84,7 +75,7 @@ async function router() {
       break;
 
     default:
-      showLoader(app);
+      showGlobalLoader(app);
       setTimeout(() => {
         app.innerHTML = `
           <section class="card text-center py-12">
@@ -95,9 +86,7 @@ async function router() {
             </p>
           </section>
         `;
-        app.classList.remove("fade-in");
-        void app.offsetWidth;
-        app.classList.add("fade-in");
+        fadeIn(app);
       }, 300);
   }
 }
