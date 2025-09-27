@@ -4,7 +4,7 @@ import { renderLayout } from '../layout.js';
 import { requireAuth } from '../authGuard.js';
 
 export async function render(app) {
-  const session = await requireAuth(); // 🚨 interdit l’accès si non connecté
+  const session = await requireAuth();
   if (!session) return;
 
   const content = `
@@ -17,13 +17,11 @@ export async function render(app) {
         <input id="title" name="title" type="text" required
                class="w-full border-gray-300 rounded-xl shadow-sm focus:ring-purple-600 focus:border-purple-600 p-2">
       </div>
-
       <div>
         <label for="summary" class="block text-sm font-medium text-gray-700 mb-1">Résumé</label>
         <textarea id="summary" name="summary" rows="4" required
                   class="w-full border-gray-300 rounded-xl shadow-sm focus:ring-purple-600 focus:border-purple-600 p-2"></textarea>
       </div>
-
       <div class="flex justify-end">
         <button type="submit"
                 class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-2 rounded-xl shadow-md transition text-base font-medium">
@@ -45,7 +43,7 @@ export async function render(app) {
     const fiche = {
       title: formData.get('title'),
       summary: formData.get('summary'),
-      owner: session.user.email, // 👈 exemple d’association fiche ↔ utilisateur
+      owner: session.user.email,
     };
 
     try {
