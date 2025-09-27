@@ -7,9 +7,10 @@ import { render as renderFicheCreate } from "./views/fiches-create.js";
 import { render as renderMessages } from "./views/messages.js";
 import { render as renderCollabs } from "./views/collaborations.js";
 import { render as renderAdmin } from "./views/admin.js";
+import { render as renderAdminFiches } from "./views/admin-fiches.js";
+import { render as renderAdminLogs } from "./views/admin-logs.js";
 import { render as renderResetPassword } from "./views/reset-password.js";
 import { render as renderResetPasswordComplete } from "./views/reset-password-complete.js";
-// 👇 on pointe maintenant directement sur auth.js (fusionné)
 import { render as renderAuth } from "./auth.js";
 
 // Helpers
@@ -66,6 +67,16 @@ async function router() {
     case hash === "#admin":
       if (!(await requireAdmin())) return;
       withFadeIn(renderAdmin, app);
+      break;
+
+    case hash === "#admin/fiches":
+      if (!(await requireAdmin())) return;
+      withFadeIn(renderAdminFiches, app);
+      break;
+
+    case hash === "#admin/logs":
+      if (!(await requireAdmin())) return;
+      withFadeIn(renderAdminLogs, app);
       break;
 
     case hash === "#reset-password":
