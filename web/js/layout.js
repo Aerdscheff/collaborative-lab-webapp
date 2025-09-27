@@ -1,5 +1,7 @@
 // Layout global futuriste/aquarelle pour l'app Collaborative Lab
-export function renderLayout(app, contentHtml) {
+export function renderLayout(app, contentHtml, options = {}) {
+  const isHome = options.isHome || false;
+
   app.innerHTML = `
     <div class="min-h-screen flex flex-col bg-[#fdf7f7] text-gray-800 font-sans">
 
@@ -14,10 +16,10 @@ export function renderLayout(app, contentHtml) {
 
           <!-- Desktop menu -->
           <div class="hidden md:flex space-x-6 font-medium">
-            <a href="#fiches" class="transition hover:text-turquoise-300 hover:drop-shadow-[0_0_8px_rgba(64,224,208,0.8)]">Fiches</a>
-            <a href="#collaborations" class="transition hover:text-turquoise-300 hover:drop-shadow-[0_0_8px_rgba(64,224,208,0.8)]">Collaborations</a>
-            <a href="#profil" class="transition hover:text-turquoise-300 hover:drop-shadow-[0_0_8px_rgba(64,224,208,0.8)]">Profil</a>
-            <a href="#admin" class="transition hover:text-turquoise-300 hover:drop-shadow-[0_0_8px_rgba(64,224,208,0.8)]">Admin</a>
+            <a href="#fiches" class="transition hover:text-turquoise-300">Fiches</a>
+            <a href="#collaborations" class="transition hover:text-turquoise-300">Collaborations</a>
+            <a href="#profil" class="transition hover:text-turquoise-300">Profil</a>
+            <a href="#admin" class="transition hover:text-turquoise-300">Admin</a>
           </div>
 
           <!-- Burger button -->
@@ -38,9 +40,15 @@ export function renderLayout(app, contentHtml) {
         </div>
       </header>
 
+      <!-- Hero background full width -->
+      <div class="relative w-full h-[40vh] md:h-[50vh] overflow-hidden mt-20">
+        <img src="/assets/batiment-aerdscheff.png" class="absolute inset-0 w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-r from-[#E25C5C] to-purple-600 ${isHome ? 'opacity-40' : 'opacity-70'}"></div>
+      </div>
+
       <!-- Main -->
-      <main class="flex-1 relative pt-28 pb-12">
-        <div id="page-content" class="max-w-4xl mx-auto px-4">
+      <main class="flex-1 relative -mt-16 md:-mt-20 pb-12">
+        <div id="page-content" class="max-w-4xl mx-auto px-4 bg-white/80 backdrop-blur-md rounded-xl shadow-lg p-6">
           ${contentHtml}
         </div>
       </main>
@@ -48,22 +56,23 @@ export function renderLayout(app, contentHtml) {
       <!-- Footer premium -->
       <footer class="bg-gradient-to-r from-purple-600/90 to-[#E25C5C]/90 text-white py-4 mt-auto">
         <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between px-6 space-y-3 md:space-y-0">
-          <p class="text-sm opacity-80">© 2025 
+          <p class="text-sm opacity-80">
+            © 2025 
             <a href="https://aerdscheff.lu" target="_blank" class="underline hover:text-turquoise-300">
               Äerdschëff
             </a> · Collaborative Lab
           </p>
           <div class="flex space-x-6">
             <a href="https://github.com/Aerdscheff/collaborative-lab-webapp" target="_blank" aria-label="Code source sur GitHub"
-               class="hover:text-turquoise-300 hover:drop-shadow-[0_0_8px_rgba(64,224,208,0.8)] transition">
+               class="hover:text-turquoise-300 transition">
               <i class="fab fa-github text-lg"></i>
             </a>
             <a href="https://aerdscheff.lu" target="_blank" aria-label="Site officiel Äerdschëff"
-               class="hover:text-turquoise-300 hover:drop-shadow-[0_0_8px_rgba(64,224,208,0.8)] transition">
+               class="hover:text-turquoise-300 transition">
               <i class="fas fa-globe text-lg"></i>
             </a>
             <a href="mailto:contact@aerdscheff.lu" aria-label="Contacter par mail"
-               class="hover:text-turquoise-300 hover:drop-shadow-[0_0_8px_rgba(64,224,208,0.8)] transition">
+               class="hover:text-turquoise-300 transition">
               <i class="fas fa-envelope text-lg"></i>
             </a>
           </div>
