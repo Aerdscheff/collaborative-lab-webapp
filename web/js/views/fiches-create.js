@@ -1,61 +1,62 @@
-import { supabase } from '../auth.js';
-import { API } from '../api.js';
+import { createFiche } from '../api.js';
 import { showFeedback } from '../utils/feedback.js';
 import { renderLayout } from '../layout.js';
 
 export async function render(app) {
-  const params = new URLSearchParams(window.location.hash.split('?')[1]);
-  const ficheId = params.get('id');
+  const content = `
+    <h1 class="text-4xl font-exo2 font-bold text-purple-700 mb-8">➕ Créer une fiche</h1>
+    <div id="fiche-create-feedback" class="mb-6"></div>
 
-  let content = `
-    <h1 class="text-2xl font-bold text-[#E25C5C] mb-6">${ficheId ? '✏️ Modifier une fiche' : '➕ Nouvelle fiche'}</h1>
-    <div id="fiche-feedback" class="mb-4"></div>
-    <form id="fiche-form" class="space-y-4">
-      <input type="text" name="title" placeholder="Titre" class="w-full border rounded px-3 py-2" required />
-      <textarea name="summary" rows="3" placeholder="Résumé" class="w-full border rounded px-3 py-2"></textarea>
-      <textarea name="content" rows="5" placeholder="Contenu détaillé" class="w-full border rounded px-3 py-2"></textarea>
-      <div class="flex justify-end space-x-2">
-        <a href="#/fiches" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded">Annuler</a>
-        <button type="submit" class="bg-[#E25C5C] hover:bg-red-600 text-white px-4 py-2 rounded">${ficheId ? 'Mettre à jour' : 'Créer'}</button>
+    <form id="fiche-create-form" class="max-w-2xl mx-auto bg-white shadow-md rounded-xl p-6 space-y-6">
+      <div>
+        <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Titre</label>
+        <input id="title" name="title" type="text" aria-label="Titre de la fiche"
+               class="w-full border-gray-300 rounded-xl shadow-sm focus:ring-purple-600 focus:border-purple-600 p-2">
+      </div>
+
+      <div>
+        <label for="summary" class="block text-sm font-medium text-gray-700 mb-1">Résumé</label>
+        <textarea id="summary" name="summary" rows="4" aria-label="Résumé de la fiche"
+                  class="w-full border-gray-300 rounded-xl shadow-sm focus:ring-purple-600 focus:border-purple-600 p-2"></textarea>
+      </div>
+
+      <div class="flex justify-end">
+        <button type="submit"
+                class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-2 rounded-xl shadow-md hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.6)] transition text-base font-medium">
+          💾 Enregistrer
+        </button>
       </div>
     </form>
-    <div id="fiche-messages-link" class="mt-6"></div>
   `;
 
   renderLayout(app, content);
 
-  const feedback = document.getElementById('fiche-feedback');
-  const form = document.getElementById('fiche-form');
-  const linkContainer = document.getElementById('fiche-messages-link');
-
-  if (ficheId) {
-    try {
-      const fiche = await API.get(ficheId);
-      if (fiche) {
-        form.title.value = fiche.title || '';
-        form.summary.value = fiche.summary || '';
-        form.content.value = fiche.content || '';
-        linkContainer.innerHTML = `<a href="#/fiches/${ficheId}/messages" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">💬 Voir les messages liés</a>`;
-      }
-    } catch {
-      showFeedback(feedback, 'error', 'Impossible de charger la fiche.');
-    }
-  }
+  const feedback = document.getElementById('fiche-create-feedback');
+  const form = document.getElementById('fiche-create-form');
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const payload = { title: form.title.value, summary: form.summary.value, content: form.content.value };
+
+    const formData = new FormData(form);
+    const fiche = {
+      title: formData.get('title'),
+      summary: formData.get('summary'),
+    };
+
     try {
-      if (ficheId) {
-        await API.update(ficheId, payload);
-        showFeedback(feedback, 'success', 'Fiche mise à jour ✅');
-      } else {
-        const res = await API.create(payload);
-        showFeedback(feedback, 'success', 'Fiche créée ✅');
-        linkContainer.innerHTML = `<a href="#/fiches/${res.id}/messages" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">💬 Voir les messages liés</a>`;
-      }
-    } catch {
-      showFeedback(feedback, 'error', 'Erreur enregistrement.');
+      showFeedback(feedback, 'info', '<div class="animate-spin h-6 w-6 border-2 border-t-transparent border-purple-600 rounded-full mx-auto"></div>');
+
+      await createFiche(fiche);
+      showFeedback(feedback, 'success', '✅ Fiche créée avec succès !');
+
+      // Redirection après 1s
+      setTimeout(() => {
+        window.location.hash = '#fiches';
+      }, 1000);
+
+    } catch (err) {
+      console.error(err);
+      showFeedback(feedback, 'error', '❌ Erreur lors de la création de la fiche.');
     }
   });
 }
