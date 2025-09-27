@@ -1,6 +1,6 @@
 // Import des vues
 import { render as renderHome } from "./views/home.js";
-import { render as renderProfile } from "./views/profile.js";
+import { render as renderProfile } from "./views/profil.js";
 import { render as renderProfileEdit } from "./views/profile-edit.js";
 import { render as renderFiches } from "./views/fiches.js";
 import { render as renderFicheCreate } from "./views/fiches-create.js";
@@ -8,68 +8,90 @@ import { render as renderMessages } from "./views/messages.js";
 import { render as renderCollabs } from "./views/collaborations.js";
 import { render as renderAdmin } from "./views/admin.js";
 import { render as renderResetPassword } from "./views/reset-password.js";
+import { render as renderAuth } from "./views/auth.js";
 
-// Helper loader + animation fade-in
+// Helpers
+import { requireAuth, requireAdmin } from "./authGuard.js";
+
+// Loader + animation fade-in
 function showLoader(app) {
   app.innerHTML = `
-    <div class="loader">
-      <div class="spinner"></div>
+    <div class="loader flex items-center justify-center h-full">
+      <div class="spinner animate-spin h-10 w-10 border-4 border-t-transparent border-purple-600 rounded-full"></div>
     </div>
   `;
 }
 
-function withFadeIn(renderFn, app) {
+function withFadeIn(renderFn, app, ...args) {
   showLoader(app);
-  setTimeout(() => {
-    renderFn(app);
+  setTimeout(async () => {
+    await renderFn(app, ...args);
     app.classList.remove("fade-in");
     void app.offsetWidth; // reset animation
     app.classList.add("fade-in");
-  }, 300); // délai pour voir le loader
+  }, 300);
 }
 
 // Router principal
-function router() {
-  const app = document.querySelector("main");
+async function router() {
+  const app = document.querySelector("main#app");
   const hash = window.location.hash || "#home";
 
-  switch (hash) {
-    case "#home":
+  switch (true) {
+    case hash === "#home":
       withFadeIn(renderHome, app);
       break;
-    case "#profil":
+
+    case hash === "#profil":
+      if (!(await requireAuth())) return;
       withFadeIn(renderProfile, app);
       break;
-    case "#profil-edit":
+
+    case hash === "#profil-edit":
+      if (!(await requireAuth())) return;
       withFadeIn(renderProfileEdit, app);
       break;
-    case "#fiches":
+
+    case hash === "#fiches":
       withFadeIn(renderFiches, app);
       break;
-    case "#fiches-create":
+
+    case hash === "#fiches/create":
+      if (!(await requireAuth())) return;
       withFadeIn(renderFicheCreate, app);
       break;
-    case "#messages":
+
+    case hash === "#messages":
+      if (!(await requireAuth())) return;
       withFadeIn(renderMessages, app);
       break;
-    case "#collaborations":
+
+    case hash === "#collaborations":
       withFadeIn(renderCollabs, app);
       break;
-    case "#admin":
+
+    case hash === "#admin":
+      if (!(await requireAdmin())) return;
       withFadeIn(renderAdmin, app);
       break;
-    case "#reset-password":
+
+    case hash === "#reset-password":
       withFadeIn(renderResetPassword, app);
       break;
+
+    case hash === "#auth":
+      withFadeIn(renderAuth, app);
+      break;
+
     default:
       showLoader(app);
       setTimeout(() => {
         app.innerHTML = `
-          <section class="card">
-            <h2>Page introuvable</h2>
-            <p>
+          <section class="card text-center py-12">
+            <h2 class="text-2xl font-exo2 text-[#E25C5C] mb-4">Page introuvable</h2>
+            <p class="text-gray-700">
               La page demandée n’existe pas. Retour à 
-              <a href="#home">l’accueil</a>.
+              <a href="#home" class="text-purple-600 underline">l’accueil</a>.
             </p>
           </section>
         `;
