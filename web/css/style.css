@@ -98,3 +98,18 @@ h2 {
 form.form label {
   display: block;
   margin-
+/* Animation fade-in */
+.fade-in {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
