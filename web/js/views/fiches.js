@@ -9,7 +9,7 @@ export async function render(app) {
     <div id="fiches-list" class="grid gap-6 md:grid-cols-2"></div>
     <div class="mt-10 text-center">
       <a href="#/fiches/create"
-        class="inline-block bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.6)] transition text-lg font-medium">
+        class="inline-block bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-3 rounded-xl shadow-md hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.6)] transition text-lg font-medium">
         ➕ Nouvelle fiche
       </a>
     </div>
@@ -21,7 +21,7 @@ export async function render(app) {
   const list = document.getElementById('fiches-list');
 
   try {
-    showFeedback(feedback, 'info', 'Chargement des fiches…');
+    showFeedback(feedback, 'info', '<div class="animate-spin h-6 w-6 border-2 border-t-transparent border-[#E25C5C] rounded-full mx-auto"></div>');
     const fiches = await getFiches();
     feedback.innerHTML = '';
 
@@ -33,18 +33,20 @@ export async function render(app) {
     list.innerHTML = fiches
       .map(
         (fiche) => `
-        <div class="rounded-lg bg-white shadow-md overflow-hidden transform transition hover:scale-[1.02] hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.4)]">
+        <div class="rounded-xl bg-white shadow-md overflow-hidden transform transition hover:scale-[1.02] hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.4)]">
           <div class="bg-gradient-to-r from-[#E25C5C] to-purple-600 h-2"></div>
           <div class="p-5">
             <h3 class="font-exo2 text-xl text-[#E25C5C] font-semibold mb-2">${fiche.title || 'Sans titre'}</h3>
             <p class="text-gray-700 mb-4">${fiche.summary || 'Pas de résumé disponible.'}</p>
             <div class="flex space-x-3">
               <a href="#/fiches/${fiche.id}"
-                 class="text-sm bg-[#E25C5C] hover:bg-red-600 text-white px-3 py-1 rounded-lg transition">
+                 aria-label="Voir la fiche ${fiche.title || ''}"
+                 class="text-sm bg-[#E25C5C] hover:bg-red-600 text-white px-3 py-1 rounded-xl transition">
                  👀 Voir
               </a>
               <a href="#/fiches/${fiche.id}/messages"
-                 class="text-sm bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-lg transition">
+                 aria-label="Ouvrir les messages de la fiche ${fiche.title || ''}"
+                 class="text-sm bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-xl transition">
                  💬 Messages
               </a>
             </div>
