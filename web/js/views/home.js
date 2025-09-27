@@ -2,12 +2,13 @@ import { renderLayout } from '../layout.js';
 
 export function render(app) {
   const content = `
-    <!-- Hero Section -->
-    <section class="relative h-[70vh] flex items-center justify-center overflow-hidden">
-      <!-- Image de fond -->
+    <!-- Hero Section plein écran largeur -->
+    <section class="relative w-full h-[70vh] flex items-center justify-center overflow-hidden">
+      <!-- Image de fond qui couvre tout -->
       <img src="/assets/batiment-aerdscheff.png" alt="Bâtiment Äerdschëff"
-           class="absolute inset-0 w-full h-full object-cover">
-      <!-- Overlay -->
+           class="absolute inset-0 w-full h-full object-cover object-center">
+
+      <!-- Overlay dégradé -->
       <div class="absolute inset-0 bg-gradient-to-r from-[#E25C5C]/40 via-purple-600/30 to-[#E25C5C]/40"></div>
 
       <!-- Cercle central -->
