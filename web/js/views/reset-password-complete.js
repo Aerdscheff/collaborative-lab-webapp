@@ -1,6 +1,6 @@
-import { supabase } from '../auth.js';
-import { showFeedback } from '../utils/feedback.js';
-import { renderLayout } from '../layout.js';
+import { supabase } from '../../auth.js';  // ✅ chemin corrigé
+import { showFeedback } from '../../utils/feedback.js';
+import { renderLayout } from '../../layout.js';
 
 export async function render(app) {
   const content = `
@@ -47,7 +47,7 @@ export async function render(app) {
 
     try {
       showFeedback(feedback, 'info', '⏳ Mise à jour du mot de passe...');
-      const { data, error } = await supabase.auth.updateUser({ password });
+      const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
 
       showFeedback(feedback, 'success', '✅ Mot de passe mis à jour avec succès !');
