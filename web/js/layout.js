@@ -4,18 +4,25 @@ export function renderLayout(app, contentHtml) {
     <div class="min-h-screen flex flex-col bg-[#fdf7f7] text-gray-800 font-sans">
 
       <!-- Header premium -->
-      <header class="fixed top-4 left-1/2 transform -translate-x-1/2 w-[95%] bg-gradient-to-r from-[#E25C5C]/90 to-purple-600/90 backdrop-blur-md rounded-xl text-white shadow-lg z-50">
+      <header class="fixed top-0 left-1/2 transform -translate-x-1/2 w-[95%] 
+        bg-gradient-to-r from-[#E25C5C]/90 to-purple-600/90 backdrop-blur-md 
+        rounded-xl text-white shadow-lg z-50">
         <nav class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+          <!-- Logo -->
           <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.hash='#home'">
             <img src="/assets/logo-official.png" alt="Äerdschëff Logo" class="h-8 drop-shadow-md">
             <span class="font-exo2 text-lg font-semibold tracking-wide">Collaborative Lab</span>
           </div>
+
+          <!-- Desktop menu -->
           <div class="hidden md:flex space-x-6 font-medium">
             <a href="#fiches" class="transition hover:text-turquoise-300">Fiches</a>
             <a href="#collaborations" class="transition hover:text-turquoise-300">Collaborations</a>
             <a href="#profil" class="transition hover:text-turquoise-300">Profil</a>
             <a href="#admin" class="transition hover:text-turquoise-300">Admin</a>
           </div>
+
+          <!-- Burger button -->
           <button id="burger-btn" aria-label="Menu mobile"
             class="md:hidden flex flex-col space-y-1.5 focus:outline-none">
             <span class="w-6 h-0.5 bg-white rounded"></span>
@@ -23,7 +30,11 @@ export function renderLayout(app, contentHtml) {
             <span class="w-6 h-0.5 bg-white rounded"></span>
           </button>
         </nav>
-        <div id="mobile-menu" class="hidden flex-col items-center space-y-4 py-4 bg-gradient-to-r from-[#E25C5C]/95 to-purple-600/95 rounded-b-xl md:hidden">
+
+        <!-- Mobile menu -->
+        <div id="mobile-menu" 
+             class="hidden flex-col items-center space-y-4 py-4 
+             bg-gradient-to-r from-[#E25C5C]/95 to-purple-600/95 rounded-b-xl md:hidden">
           <a href="#fiches" class="block w-full text-center py-2 hover:text-turquoise-300">Fiches</a>
           <a href="#collaborations" class="block w-full text-center py-2 hover:text-turquoise-300">Collaborations</a>
           <a href="#profil" class="block w-full text-center py-2 hover:text-turquoise-300">Profil</a>
@@ -32,7 +43,7 @@ export function renderLayout(app, contentHtml) {
       </header>
 
       <!-- Main -->
-      <main class="flex-1 relative pt-28 pb-12">
+      <main class="flex-1 relative pb-12">
         ${contentHtml}
       </main>
 
@@ -49,6 +60,7 @@ export function renderLayout(app, contentHtml) {
       </footer>
     </div>
 
+    <!-- Script menu mobile -->
     <script>
       const burgerBtn = document.getElementById("burger-btn");
       const mobileMenu = document.getElementById("mobile-menu");
