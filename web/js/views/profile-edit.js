@@ -18,7 +18,7 @@ export async function render(app) {
       </div>
     </section>
 
-    <!-- Formulaire (70%) -->
+    <!-- Formulaire -->
     <section class="relative w-full h-[70vh] overflow-y-auto py-10">
       <div id="profil-edit-feedback" class="mb-6 text-center"></div>
       <div id="profil-edit-container" class="max-w-2xl mx-auto"></div>
