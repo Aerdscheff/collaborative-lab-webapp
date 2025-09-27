@@ -1,5 +1,7 @@
+import { renderLayout } from '../layout.js';
+
 export function render(app) {
-  app.innerHTML = `
+  const content = `
     <!-- Hero Section -->
     <section class="relative h-[70vh] flex items-center justify-center overflow-hidden">
       <!-- Image de fond -->
@@ -37,4 +39,6 @@ export function render(app) {
       </div>
     </section>
   `;
+
+  renderLayout(app, content);
 }
