@@ -14,7 +14,7 @@ export async function render(app) {
            style="background-image: url('/assets/batiment-aerdscheff.png'); background-attachment: fixed;"></div>
       <div class="absolute inset-0 bg-gradient-to-r from-[#E25C5C]/70 via-purple-600/80 to-[#E25C5C]/70"></div>
       <div class="relative z-10 text-center text-white">
-        <h1 class="text-3xl font-exo2 font-bold">⚙️ Administration</h1>
+        <h1 class="text-3xl font-exo2 font-bold">⚙️ Administration — Utilisateurs</h1>
       </div>
     </section>
 
