@@ -1,8 +1,12 @@
 import { supabase } from './auth.js';
 
-/* -------------------
-   PROFIL UTILISATEUR
-------------------- */
+//
+// -------------------- PROFIL --------------------
+//
+
+/**
+ * Récupérer un profil utilisateur
+ */
 export async function getProfile(userId) {
   try {
     const { data, error } = await supabase
@@ -18,28 +22,43 @@ export async function getProfile(userId) {
   }
 }
 
-export async function updateProfile(userId, payload) {
+/**
+ * Mettre à jour un profil utilisateur
+ */
+export async function updateProfile(userId, updatedData) {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
-      .update(payload)
-      .eq('id', userId);
+      .update(updatedData)
+      .eq('id', userId)
+      .select()
+      .single();
     if (error) throw error;
-    return { id: userId, ...payload };
+    return data;
   } catch (err) {
     console.error('[api] updateProfile error', err);
     return null;
   }
 }
 
-/* -------------------
-   FICHES PÉDAGOGIQUES
-------------------- */
+//
+// -------------------- FICHES --------------------
+//
+
+/**
+ * Récupérer toutes les fiches
+ */
 export async function getFiches({ q = '', status = '', limit = 20, offset = 0 } = {}) {
   try {
     let query = supabase.from('fiches').select('*').range(offset, offset + limit - 1);
-    if (q) query = query.ilike('title', `%${q}%`);
-    if (status) query = query.eq('status', status);
+
+    if (q) {
+      query = query.ilike('title', `%${q}%`);
+    }
+    if (status) {
+      query = query.eq('status', status);
+    }
+
     const { data, error } = await query.order('created_at', { ascending: false });
     if (error) throw error;
     return data || [];
@@ -49,9 +68,16 @@ export async function getFiches({ q = '', status = '', limit = 20, offset = 0 } 
   }
 }
 
+/**
+ * Récupérer une fiche par ID
+ */
 export async function getFicheById(id) {
   try {
-    const { data, error } = await supabase.from('fiches').select('*').eq('id', id).single();
+    const { data, error } = await supabase
+      .from('fiches')
+      .select('*')
+      .eq('id', id)
+      .single();
     if (error) throw error;
     return data;
   } catch (err) {
@@ -60,9 +86,16 @@ export async function getFicheById(id) {
   }
 }
 
+/**
+ * Créer une nouvelle fiche
+ */
 export async function createFiche(payload) {
   try {
-    const { data, error } = await supabase.from('fiches').insert(payload).select('id').single();
+    const { data, error } = await supabase
+      .from('fiches')
+      .insert(payload)
+      .select('id')
+      .single();
     if (error) throw error;
     return { id: data.id };
   } catch (err) {
@@ -71,131 +104,41 @@ export async function createFiche(payload) {
   }
 }
 
+/**
+ * Mettre à jour une fiche
+ */
 export async function updateFiche(id, payload) {
   try {
     const { error } = await supabase.from('fiches').update(payload).eq('id', id);
     if (error) throw error;
-    return { id, ...payload };
+    return { id };
   } catch (err) {
     console.error('[api] updateFiche error', err);
     return null;
   }
 }
 
-export async function deleteFiche(id) {
+/**
+ * Supprimer une fiche
+ */
+export async function removeFiche(id) {
   try {
     const { error } = await supabase.from('fiches').delete().eq('id', id);
     if (error) throw error;
     return { id };
   } catch (err) {
-    console.error('[api] deleteFiche error', err);
+    console.error('[api] removeFiche error', err);
     return null;
   }
 }
 
-/* -------------------
-   COLLABORATIONS
-------------------- */
-export async function getCollaborations({ q = '', limit = 20, offset = 0 } = {}) {
-  try {
-    let query = supabase.from('collaborations').select('*').range(offset, offset + limit - 1);
-    if (q) query = query.ilike('title', `%${q}%`);
-    const { data, error } = await query.order('created_at', { ascending: false });
-    if (error) throw error;
-    return data || [];
-  } catch (err) {
-    console.error('[api] getCollaborations error', err);
-    return [];
-  }
-}
+//
+// -------------------- UTILISATEURS (ADMIN) --------------------
+//
 
-export async function getCollaborationById(id) {
-  try {
-    const { data, error } = await supabase.from('collaborations').select('*').eq('id', id).single();
-    if (error) throw error;
-    return data;
-  } catch (err) {
-    console.error('[api] getCollaborationById error', err);
-    return null;
-  }
-}
-
-export async function createCollaboration(payload) {
-  try {
-    const { data, error } = await supabase.from('collaborations').insert(payload).select('id').single();
-    if (error) throw error;
-    return { id: data.id };
-  } catch (err) {
-    console.error('[api] createCollaboration error', err);
-    return null;
-  }
-}
-
-export async function updateCollaboration(id, payload) {
-  try {
-    const { error } = await supabase.from('collaborations').update(payload).eq('id', id);
-    if (error) throw error;
-    return { id, ...payload };
-  } catch (err) {
-    console.error('[api] updateCollaboration error', err);
-    return null;
-  }
-}
-
-export async function deleteCollaboration(id) {
-  try {
-    const { error } = await supabase.from('collaborations').delete().eq('id', id);
-    if (error) throw error;
-    return { id };
-  } catch (err) {
-    console.error('[api] deleteCollaboration error', err);
-    return null;
-  }
-}
-
-/* -------------------
-   MESSAGES
-------------------- */
-export async function getMessages(userEmail) {
-  try {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('to_email', userEmail)
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return data || [];
-  } catch (err) {
-    console.error('[api] getMessages error', err);
-    return [];
-  }
-}
-
-export async function sendMessage(payload) {
-  try {
-    const { data, error } = await supabase.from('messages').insert(payload).select('id').single();
-    if (error) throw error;
-    return { id: data.id };
-  } catch (err) {
-    console.error('[api] sendMessage error', err);
-    return null;
-  }
-}
-
-export async function markMessageRead(id) {
-  try {
-    const { error } = await supabase.from('messages').update({ read: true }).eq('id', id);
-    if (error) throw error;
-    return { id, read: true };
-  } catch (err) {
-    console.error('[api] markMessageRead error', err);
-    return null;
-  }
-}
-
-/* -------------------
-   ADMIN (USERS)
-------------------- */
+/**
+ * Récupérer tous les utilisateurs (admin)
+ */
 export async function getUsers() {
   try {
     const { data, error } = await supabase.from('users').select('*');
@@ -207,13 +150,32 @@ export async function getUsers() {
   }
 }
 
+/**
+ * Mettre à jour le rôle d'un utilisateur (admin)
+ */
 export async function updateUserRole(userId, role) {
   try {
-    const { error } = await supabase.from('users').update({ role }).eq('id', userId);
+    const { data, error } = await supabase
+      .from('users')
+      .update({ role })
+      .eq('id', userId)
+      .select()
+      .single();
     if (error) throw error;
-    return { id: userId, role };
+    return data;
   } catch (err) {
     console.error('[api] updateUserRole error', err);
     return null;
   }
 }
+
+//
+// -------------------- API OBJET POUR COMPATIBILITÉ --------------------
+//
+export const API = {
+  list: getFiches,
+  get: getFicheById,
+  create: createFiche,
+  update: updateFiche,
+  remove: removeFiche,
+};
