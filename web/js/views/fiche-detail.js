@@ -1,50 +1,62 @@
-import { supabase } from '../auth.js';
-import { renderLayout } from '../layout.js';
+import { getFicheById } from '../api.js';
 import { showFeedback } from '../utils/feedback.js';
+import { renderLayout } from '../layout.js';
 
-export async function render(app, ficheId) {
+export async function render(app, id) {
   const content = `
-    <a href="#/fiches" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded">⬅ Retour</a>
-    <div id="fiche-content" class="my-6"></div>
-    <h2 class="text-xl font-exo2 font-semibold mb-4">💬 Discussion</h2>
-    <div id="messages-feedback" class="mb-4"></div>
-    <div id="messages-list" class="space-y-4 mb-6"></div>
-    <form id="message-form" class="space-y-4">
-      <textarea name="body" rows="3" class="w-full border rounded px-3 py-2"></textarea>
-      <button type="submit" class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-[0_0_10px_2px_rgba(64,224,208,0.6)] transition">Envoyer</button>
-    </form>
+    <h1 class="text-4xl font-exo2 font-bold text-[#E25C5C] mb-8">📄 Détail de la fiche</h1>
+    <div id="fiche-detail-feedback" class="mb-6"></div>
+    <div id="fiche-detail" class="max-w-3xl mx-auto"></div>
+    <div class="mt-8 text-center">
+      <a href="#fiches"
+         class="inline-block bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-2 rounded-xl shadow-md hover:shadow-[0_0_15px_3px_rgba(64,224,208,0.6)] transition text-base font-medium">
+        ⬅️ Retour aux fiches
+      </a>
+    </div>
   `;
+
   renderLayout(app, content);
 
-  const ficheContainer = document.getElementById('fiche-content');
-  const list = document.getElementById('messages-list');
-  const feedback = document.getElementById('messages-feedback');
-  const form = document.getElementById('message-form');
+  const feedback = document.getElementById('fiche-detail-feedback');
+  const container = document.getElementById('fiche-detail');
 
-  async function loadFiche() {
-    const { data } = await supabase.from('fiches').select('*').eq('id', ficheId).single();
-    ficheContainer.innerHTML = `
-      <h1 class="text-2xl font-exo2 text-[#E25C5C]">${data.title}</h1>
-      <p class="text-gray-700">${data.summary}</p>
-    `;
-  }
+  try {
+    showFeedback(feedback, 'info', '<div class="animate-spin h-6 w-6 border-2 border-t-transparent border-[#E25C5C] rounded-full mx-auto"></div>');
+    const fiche = await getFicheById(id);
+    feedback.innerHTML = '';
 
-  async function loadMessages() {
-    const { data } = await supabase.from('messages').select('*').eq('fiche_id', ficheId);
-    list.innerHTML = data?.map(m => `<div class="border p-3 rounded bg-white shadow">${m.body}</div>`).join('') || '';
-  }
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const body = form.body.value.trim();
-    try {
-      await supabase.from('messages').insert({ fiche_id: ficheId, body });
-      await loadMessages();
-    } catch {
-      showFeedback(feedback, 'error', 'Erreur envoi.');
+    if (!fiche) {
+      container.innerHTML = `<p class="text-gray-500">❌ Fiche introuvable.</p>`;
+      return;
     }
-  });
 
-  await loadFiche();
-  await loadMessages();
+    container.innerHTML = `
+      <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="font-exo2 text-2xl text-[#E25C5C] font-semibold mb-4">${fiche.title || 'Sans titre'}</h2>
+        <p class="text-gray-700 mb-6">${fiche.summary || 'Pas de résumé disponible.'}</p>
+
+        <div class="space-y-2 text-gray-600">
+          <p><strong>Niveau :</strong> ${fiche.level || 'Non spécifié'}</p>
+          <p><strong>Discipline :</strong> ${fiche.discipline || 'Non spécifiée'}</p>
+          <p><strong>Tags :</strong> ${(fiche.tags && fiche.tags.join(', ')) || 'Aucun'}</p>
+        </div>
+
+        <div class="mt-6 flex space-x-3">
+          <a href="#/fiches/${fiche.id}/edit"
+             aria-label="Modifier la fiche ${fiche.title || ''}"
+             class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl shadow-md transition">
+             ✏️ Modifier
+          </a>
+          <a href="#/fiches/${fiche.id}/messages"
+             aria-label="Voir les messages de la fiche ${fiche.title || ''}"
+             class="bg-[#E25C5C] hover:bg-red-600 text-white px-4 py-2 rounded-xl shadow-md transition">
+             💬 Messages
+          </a>
+        </div>
+      </div>
+    `;
+  } catch (err) {
+    console.error(err);
+    showFeedback(feedback, 'error', 'Impossible de charger cette fiche.');
+  }
 }
