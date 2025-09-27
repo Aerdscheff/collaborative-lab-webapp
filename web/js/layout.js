@@ -1,5 +1,10 @@
+import { getSession } from './auth.js';
+
 // Layout global futuriste/aquarelle pour l'app Collaborative Lab
-export function renderLayout(app, contentHtml) {
+export async function renderLayout(app, contentHtml) {
+  const session = await getSession();
+  const role = session?.user?.role || session?.user?.app_metadata?.role || "teacher";
+
   app.innerHTML = `
     <div class="min-h-screen flex flex-col bg-[#fdf7f7] text-gray-800 font-sans">
 
@@ -20,6 +25,9 @@ export function renderLayout(app, contentHtml) {
             <a href="#collaborations" class="transition hover:text-turquoise-300">Collaborations</a>
             <a href="#profil" class="transition hover:text-turquoise-300">Profil</a>
 
+            ${
+              role === "admin"
+                ? `
             <!-- Menu admin avec dropdown -->
             <div class="relative group">
               <button class="transition hover:text-turquoise-300">Admin ▾</button>
@@ -29,6 +37,9 @@ export function renderLayout(app, contentHtml) {
                 <a href="#admin/logs" class="block px-4 py-2 hover:bg-gray-100">📜 Logs</a>
               </div>
             </div>
+                `
+                : ""
+            }
           </div>
 
           <!-- Burger button -->
@@ -47,10 +58,16 @@ export function renderLayout(app, contentHtml) {
           <a href="#fiches" class="block w-full text-center py-2 hover:text-turquoise-300">Fiches</a>
           <a href="#collaborations" class="block w-full text-center py-2 hover:text-turquoise-300">Collaborations</a>
           <a href="#profil" class="block w-full text-center py-2 hover:text-turquoise-300">Profil</a>
+          ${
+            role === "admin"
+              ? `
           <div class="border-t border-white/30 w-2/3"></div>
           <a href="#admin" class="block w-full text-center py-2 hover:text-turquoise-300">👥 Utilisateurs</a>
           <a href="#admin/fiches" class="block w-full text-center py-2 hover:text-turquoise-300">📚 Fiches</a>
           <a href="#admin/logs" class="block w-full text-center py-2 hover:text-turquoise-300">📜 Logs</a>
+              `
+              : ""
+          }
         </div>
       </header>
 
