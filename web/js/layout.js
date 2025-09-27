@@ -3,42 +3,80 @@ export function renderLayout(app, contentHtml) {
   app.innerHTML = `
     <div class="min-h-screen flex flex-col bg-[#fdf7f7] text-gray-800 font-sans">
 
-      <!-- Header -->
-      <header class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white shadow">
+      <!-- Header premium -->
+      <header class="fixed top-4 left-1/2 transform -translate-x-1/2 w-[95%] bg-gradient-to-r from-[#E25C5C]/90 to-purple-600/90 backdrop-blur-md rounded-xl text-white shadow-lg z-50">
         <nav class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+          <!-- Logo -->
           <div class="flex items-center space-x-3">
-            <img src="./assets/aerdscheff-logo.png" alt="Äerdschëff Logo" class="h-8">
-            <span class="font-exo2 text-lg">Collaborative Lab</span>
+            <img src="/assets/logo-official.png" alt="Äerdschëff Logo" class="h-8 drop-shadow-md">
+            <span class="font-exo2 text-lg font-semibold tracking-wide">Collaborative Lab</span>
           </div>
-          <div class="flex space-x-6">
-            <a href="#/fiches" class="transition hover:text-turquoise-300 hover:shadow-[0_0_10px_2px_rgba(64,224,208,0.6)]">Fiches</a>
-            <a href="#/collaborations" class="transition hover:text-turquoise-300 hover:shadow-[0_0_10px_2px_rgba(64,224,208,0.6)]">Collaborations</a>
-            <a href="#/profiles" class="transition hover:text-turquoise-300 hover:shadow-[0_0_10px_2px_rgba(64,224,208,0.6)]">Profil</a>
-            <a href="#/admin" class="transition hover:text-turquoise-300 hover:shadow-[0_0_10px_2px_rgba(64,224,208,0.6)]">Admin</a>
+
+          <!-- Desktop menu -->
+          <div class="hidden md:flex space-x-6 font-medium">
+            <a href="#fiches" class="transition hover:text-turquoise-300 hover:drop-shadow-[0_0_8px_rgba(64,224,208,0.8)]">Fiches</a>
+            <a href="#collaborations" class="transition hover:text-turquoise-300 hover:drop-shadow-[0_0_8px_rgba(64,224,208,0.8)]">Collaborations</a>
+            <a href="#profil" class="transition hover:text-turquoise-300 hover:drop-shadow-[0_0_8px_rgba(64,224,208,0.8)]">Profil</a>
+            <a href="#admin" class="transition hover:text-turquoise-300 hover:drop-shadow-[0_0_8px_rgba(64,224,208,0.8)]">Admin</a>
           </div>
+
+          <!-- Burger button -->
+          <button id="burger-btn" aria-label="Menu mobile"
+            class="md:hidden flex flex-col space-y-1.5 focus:outline-none">
+            <span class="w-6 h-0.5 bg-white rounded"></span>
+            <span class="w-6 h-0.5 bg-white rounded"></span>
+            <span class="w-6 h-0.5 bg-white rounded"></span>
+          </button>
         </nav>
+
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden flex-col items-center space-y-4 py-4 bg-gradient-to-r from-[#E25C5C]/95 to-purple-600/95 rounded-b-xl md:hidden">
+          <a href="#fiches" class="block w-full text-center py-2 hover:text-turquoise-300">Fiches</a>
+          <a href="#collaborations" class="block w-full text-center py-2 hover:text-turquoise-300">Collaborations</a>
+          <a href="#profil" class="block w-full text-center py-2 hover:text-turquoise-300">Profil</a>
+          <a href="#admin" class="block w-full text-center py-2 hover:text-turquoise-300">Admin</a>
+        </div>
       </header>
 
       <!-- Main -->
-      <main class="flex-1 relative py-12">
-        <!-- Décor gauche -->
-        <img src="./assets/deco-left.png" alt="Décor gauche"
-             class="absolute left-0 top-20 h-32 opacity-70 pointer-events-none">
-
-        <!-- Contenu central -->
+      <main class="flex-1 relative pt-28 pb-12">
         <div id="page-content" class="max-w-4xl mx-auto px-4">
           ${contentHtml}
         </div>
-
-        <!-- Décor droit -->
-        <img src="./assets/deco-right.png" alt="Décor droite"
-             class="absolute right-0 top-20 h-32 opacity-70 pointer-events-none">
       </main>
 
-      <!-- Footer -->
-      <footer class="bg-gray-900 text-white text-center py-3">
-        <p class="text-sm opacity-80">© 2025 Äerdschëff · Collaborative Lab</p>
+      <!-- Footer premium -->
+      <footer class="bg-gradient-to-r from-purple-600/90 to-[#E25C5C]/90 text-white py-4 mt-auto">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between px-6 space-y-3 md:space-y-0">
+          <p class="text-sm opacity-80">© 2025 Äerdschëff · Collaborative Lab</p>
+          <div class="flex space-x-6">
+            <a href="https://github.com/Aerdscheff/collaborative-lab-webapp" target="_blank" aria-label="Code source sur GitHub"
+               class="hover:text-turquoise-300 hover:drop-shadow-[0_0_8px_rgba(64,224,208,0.8)] transition">
+              <i class="fab fa-github text-lg"></i>
+            </a>
+            <a href="https://aerdscheff.lu" target="_blank" aria-label="Site officiel Äerdschëff"
+               class="hover:text-turquoise-300 hover:drop-shadow-[0_0_8px_rgba(64,224,208,0.8)] transition">
+              <i class="fas fa-globe text-lg"></i>
+            </a>
+            <a href="mailto:contact@aerdscheff.lu" aria-label="Contacter par mail"
+               class="hover:text-turquoise-300 hover:drop-shadow-[0_0_8px_rgba(64,224,208,0.8)] transition">
+              <i class="fas fa-envelope text-lg"></i>
+            </a>
+          </div>
+        </div>
       </footer>
     </div>
+
+    <!-- Script menu mobile -->
+    <script>
+      const burgerBtn = document.getElementById("burger-btn");
+      const mobileMenu = document.getElementById("mobile-menu");
+      if (burgerBtn) {
+        burgerBtn.addEventListener("click", () => {
+          mobileMenu.classList.toggle("hidden");
+          mobileMenu.classList.toggle("flex");
+        });
+      }
+    </script>
   `;
 }
