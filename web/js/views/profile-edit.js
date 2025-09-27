@@ -1,8 +1,12 @@
 import { getProfile, updateProfile } from '../api.js';
 import { showFeedback } from '../utils/feedback.js';
 import { renderLayout } from '../layout.js';
+import { requireAuth } from '../authGuard.js';
 
 export async function render(app) {
+  const session = await requireAuth();
+  if (!session) return;
+
   const content = `
     <h1 class="text-4xl font-exo2 font-bold text-purple-700 mb-8">✏️ Modifier mon profil</h1>
     <div id="profil-edit-feedback" class="mb-6"></div>
@@ -15,8 +19,8 @@ export async function render(app) {
   const container = document.getElementById('profil-edit-container');
 
   try {
-    showFeedback(feedback, 'info', '<div class="animate-spin h-6 w-6 border-2 border-t-transparent border-purple-600 rounded-full mx-auto"></div>');
-    const profil = await getProfile();
+    showFeedback(feedback, 'info', 'Chargement du profil...');
+    const profil = await getProfile(session.user.id);
     feedback.innerHTML = '';
 
     if (!profil) {
@@ -28,14 +32,22 @@ export async function render(app) {
       <form id="profil-edit-form" class="bg-white shadow-md rounded-xl p-6 space-y-6">
         <div>
           <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
-          <input id="name" name="name" type="text" value="${profil.name || ''}"
+          <input id="name" name="name" type="text"
+                 value="${profil.name || ''}"
                  class="w-full border-gray-300 rounded-xl shadow-sm focus:ring-purple-600 focus:border-purple-600 p-2">
         </div>
 
         <div>
           <label for="discipline" class="block text-sm font-medium text-gray-700 mb-1">Discipline</label>
-          <input id="discipline" name="discipline" type="text" value="${profil.discipline || ''}"
+          <input id="discipline" name="discipline" type="text"
+                 value="${profil.discipline || ''}"
                  class="w-full border-gray-300 rounded-xl shadow-sm focus:ring-purple-600 focus:border-purple-600 p-2">
+        </div>
+
+        <div>
+          <label for="bio" class="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+          <textarea id="bio" name="bio" rows="4"
+                    class="w-full border-gray-300 rounded-xl shadow-sm focus:ring-purple-600 focus:border-purple-600 p-2">${profil.bio || ''}</textarea>
         </div>
 
         <div class="flex justify-between">
@@ -51,19 +63,21 @@ export async function render(app) {
       </form>
     `;
 
-    document.getElementById('profil-edit-form').addEventListener('submit', async (e) => {
+    const form = document.getElementById('profil-edit-form');
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const formData = new FormData(e.target);
+      const formData = new FormData(form);
       const updated = {
         name: formData.get('name'),
         discipline: formData.get('discipline'),
+        bio: formData.get('bio'),
       };
 
       try {
         showFeedback(feedback, 'info', '💾 Sauvegarde en cours...');
-        await updateProfile(updated);
-        showFeedback(feedback, 'success', '✅ Profil mis à jour !');
+        await updateProfile(session.user.id, updated);
+        showFeedback(feedback, 'success', '✅ Profil mis à jour avec succès !');
 
         setTimeout(() => {
           window.location.hash = '#profil';
