@@ -1,6 +1,6 @@
-import { supabase } from '../../auth.js';  // ✅ chemin corrigé
-import { showFeedback } from '../../utils/feedback.js';
-import { renderLayout } from '../../layout.js';
+import { supabase } from '../auth.js';  // ✅ chemin corrigé
+import { showFeedback } from '../utils/feedback.js';
+import { renderLayout } from '../layout.js';
 
 export async function render(app) {
   const content = `
