@@ -4,7 +4,7 @@ import { showFeedback } from '../utils/feedback.js';
 
 export async function render(app) {
   const content = `
-    <!-- Hero sombre -->
+    <!-- Hero sombre (30%) -->
     <section class="relative w-full h-[30vh] flex items-center justify-center overflow-hidden">
       <div class="absolute inset-0 bg-cover bg-center"
            style="background-image: url('/assets/batiment-aerdscheff.png'); background-attachment: fixed;"></div>
@@ -14,6 +14,7 @@ export async function render(app) {
       </div>
     </section>
 
+    <!-- Contenu (70%) -->
     <section class="relative w-full h-[70vh] overflow-y-auto py-10">
       <div id="fiches-feedback" class="mb-6"></div>
       <div id="fiches-list" class="grid gap-6 md:grid-cols-2"></div>
