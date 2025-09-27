@@ -8,9 +8,21 @@ export async function render(app) {
   if (!session) return;
 
   const content = `
-    <h1 class="text-4xl font-exo2 font-bold text-purple-700 mb-8">✏️ Modifier mon profil</h1>
-    <div id="profil-edit-feedback" class="mb-6"></div>
-    <div id="profil-edit-container" class="max-w-2xl mx-auto"></div>
+    <!-- Hero sombre -->
+    <section class="relative w-full h-[30vh] flex items-center justify-center overflow-hidden">
+      <div class="absolute inset-0 bg-cover bg-center"
+           style="background-image: url('/assets/batiment-aerdscheff.png'); background-attachment: fixed;"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-[#E25C5C]/70 via-purple-600/80 to-[#E25C5C]/70"></div>
+      <div class="relative z-10 text-center text-white">
+        <h1 class="text-3xl font-exo2 font-bold">✏️ Modifier mon profil</h1>
+      </div>
+    </section>
+
+    <!-- Formulaire (70%) -->
+    <section class="relative w-full h-[70vh] overflow-y-auto py-10">
+      <div id="profil-edit-feedback" class="mb-6 text-center"></div>
+      <div id="profil-edit-container" class="max-w-2xl mx-auto"></div>
+    </section>
   `;
 
   renderLayout(app, content);
