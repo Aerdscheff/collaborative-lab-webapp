@@ -50,7 +50,7 @@ export async function render(app) {
 
   const feedback = document.getElementById('auth-feedback');
 
-  // Login
+  // Gestion login
   const loginForm = document.getElementById('login-form');
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
@@ -64,7 +64,7 @@ export async function render(app) {
     });
   }
 
-  // Signup
+  // Gestion signup
   const signupForm = document.getElementById('signup-form');
   if (signupForm) {
     signupForm.addEventListener('submit', async (e) => {
@@ -77,7 +77,7 @@ export async function render(app) {
     });
   }
 
-  // Logout
+  // Gestion logout
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
