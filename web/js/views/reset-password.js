@@ -1,6 +1,6 @@
-import { supabase } from '../auth.js';
-import { showFeedback } from '../utils/feedback.js';
-import { renderLayout } from '../layout.js';
+import { supabase } from '../../auth.js';  // ✅ chemin corrigé
+import { showFeedback } from '../../utils/feedback.js';
+import { renderLayout } from '../../layout.js';
 
 export async function render(app) {
   const content = `
@@ -35,7 +35,7 @@ export async function render(app) {
     try {
       showFeedback(feedback, 'info', '⏳ Envoi du lien de réinitialisation...');
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/#/auth',
+        redirectTo: window.location.origin + '/#/reset-password-complete',
       });
       if (error) throw error;
 
