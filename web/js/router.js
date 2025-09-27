@@ -1,6 +1,6 @@
 // Import des vues
 import { render as renderHome } from "./views/home.js";
-import { render as renderProfile } from "./views/profil.js";
+import { render as renderProfile } from "./views/profile.js";       // ✅ corrigé
 import { render as renderProfileEdit } from "./views/profile-edit.js";
 import { render as renderFiches } from "./views/fiches.js";
 import { render as renderFicheCreate } from "./views/fiches-create.js";
