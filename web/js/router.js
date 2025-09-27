@@ -1,6 +1,6 @@
 // Import des vues
 import { render as renderHome } from "./views/home.js";
-import { render as renderProfile } from "./views/profile.js";       // ✅ corrigé
+import { render as renderProfile } from "./views/profile.js";
 import { render as renderProfileEdit } from "./views/profile-edit.js";
 import { render as renderFiches } from "./views/fiches.js";
 import { render as renderFicheCreate } from "./views/fiches-create.js";
@@ -8,6 +8,7 @@ import { render as renderMessages } from "./views/messages.js";
 import { render as renderCollabs } from "./views/collaborations.js";
 import { render as renderAdmin } from "./views/admin.js";
 import { render as renderResetPassword } from "./views/reset-password.js";
+import { render as renderResetPasswordComplete } from "./views/reset-password-complete.js"; // ✅ ajout
 import { render as renderAuth } from "./views/auth.js";
 
 // Helpers
@@ -68,6 +69,10 @@ async function router() {
 
     case hash === "#reset-password":
       withFadeIn(renderResetPassword, app);
+      break;
+
+    case hash === "#reset-password-complete": // ✅ nouvelle route
+      withFadeIn(renderResetPasswordComplete, app);
       break;
 
     case hash === "#auth":
