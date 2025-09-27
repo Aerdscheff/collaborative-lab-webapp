@@ -13,6 +13,7 @@ export async function renderLayout(app, contentHtml) {
         bg-gradient-to-r from-[#E25C5C]/90 to-purple-600/90 backdrop-blur-md 
         text-white shadow-lg z-50">
         <nav class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+          
           <!-- Logo -->
           <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.hash='#home'">
             <img src="/assets/logo-official.png" alt="Äerdschëff Logo" class="h-8 drop-shadow-md">
@@ -58,6 +59,7 @@ export async function renderLayout(app, contentHtml) {
           <a href="#fiches" class="block w-full text-center py-2 hover:text-turquoise-300">Fiches</a>
           <a href="#collaborations" class="block w-full text-center py-2 hover:text-turquoise-300">Collaborations</a>
           <a href="#profil" class="block w-full text-center py-2 hover:text-turquoise-300">Profil</a>
+
           ${
             role === "admin"
               ? `
