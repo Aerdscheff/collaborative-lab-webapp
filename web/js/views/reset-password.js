@@ -2,87 +2,48 @@ import { supabase } from '../auth.js';
 import { showFeedback } from '../utils/feedback.js';
 import { renderLayout } from '../layout.js';
 
-function parseHashParams() {
-  const hash = window.location.hash.substring(1);
-  const urlParams = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : hash);
-  return {
-    access_token: urlParams.get('access_token'),
-    refresh_token: urlParams.get('refresh_token'),
-    type: urlParams.get('type'),
-    error: urlParams.get('error'),
-    error_description: urlParams.get('error_description')
-  };
-}
-
-export function render(app) {
+export async function render(app) {
   const content = `
-    <section class="max-w-md mx-auto bg-white shadow rounded-lg p-6">
-      <h1 class="text-2xl font-exo2 text-[#E25C5C] mb-6 text-center">🔑 Réinitialiser le mot de passe</h1>
-      <div id="reset-feedback" class="mb-4"></div>
-      <form id="reset-form" class="space-y-4">
-        <input type="password" name="password" placeholder="Nouveau mot de passe"
-          class="w-full border rounded px-3 py-2" required />
-        <input type="password" name="passwordConfirm" placeholder="Confirmer le mot de passe"
-          class="w-full border rounded px-3 py-2" required />
-        <button type="submit" disabled
-          class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-[0_0_10px_2px_rgba(64,224,208,0.6)] transition">
-          Mettre à jour
+    <h1 class="text-3xl font-exo2 font-bold text-[#E25C5C] mb-6">🔑 Réinitialiser mon mot de passe</h1>
+    <div id="reset-feedback" class="mb-6"></div>
+
+    <form id="reset-form" class="max-w-md mx-auto bg-white shadow-md rounded-xl p-6 space-y-4">
+      <div>
+        <label for="reset-email" class="block text-sm font-medium text-gray-700 mb-1">Adresse email</label>
+        <input type="email" id="reset-email" name="email" required
+               class="w-full border-gray-300 rounded-xl p-2 focus:ring-purple-600 focus:border-purple-600"
+               placeholder="exemple@domaine.com">
+      </div>
+      <div class="flex justify-end">
+        <button type="submit"
+                class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-2 rounded-xl shadow-md transition">
+          📩 Envoyer le lien
         </button>
-      </form>
-    </section>
+      </div>
+    </form>
   `;
+
   renderLayout(app, content);
 
   const feedback = document.getElementById('reset-feedback');
   const form = document.getElementById('reset-form');
-  const passwordInput = form.querySelector('input[name="password"]');
-  const confirmInput = form.querySelector('input[name="passwordConfirm"]');
-  const submitBtn = form.querySelector('button[type="submit"]');
-
-  submitBtn.disabled = true;
-  showFeedback(feedback, 'info', 'Validation du lien…');
-
-  (async () => {
-    const { access_token, refresh_token, type, error, error_description } = parseHashParams();
-    if (error) {
-      showFeedback(feedback, 'error', decodeURIComponent(error_description || 'Lien invalide.'));
-      return;
-    }
-    if (type !== 'recovery' || !access_token || !refresh_token) {
-      showFeedback(feedback, 'error', 'Lien invalide ou incomplet.');
-      return;
-    }
-    try {
-      const { error: setError } = await supabase.auth.setSession({ access_token, refresh_token });
-      if (setError) throw setError;
-      showFeedback(feedback, 'success', 'Lien validé ✅ Vous pouvez saisir un nouveau mot de passe.');
-      submitBtn.disabled = false;
-      passwordInput.focus();
-    } catch {
-      showFeedback(feedback, 'error', 'Impossible de valider le lien.');
-    }
-  })();
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const password = passwordInput.value.trim();
-    const confirm = confirmInput.value.trim();
-    if (!password || !confirm) {
-      showFeedback(feedback, 'error', 'Les deux champs sont obligatoires.');
-      return;
-    }
-    if (password !== confirm) {
-      showFeedback(feedback, 'error', 'Les mots de passe ne correspondent pas.');
-      return;
-    }
+    const email = document.getElementById('reset-email').value;
+
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      showFeedback(feedback, 'info', '⏳ Envoi du lien de réinitialisation...');
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/#/auth',
+      });
       if (error) throw error;
-      showFeedback(feedback, 'success', 'Mot de passe mis à jour ✅ Redirection…');
-      await supabase.auth.signOut();
-      setTimeout(() => { window.location.hash = '#/login'; }, 1000);
+
+      showFeedback(feedback, 'success', '✅ Lien de réinitialisation envoyé ! Vérifiez vos emails.');
+      form.reset();
     } catch (err) {
-      showFeedback(feedback, 'error', err.message || 'Erreur mise à jour.');
+      console.error('[reset-password] error', err);
+      showFeedback(feedback, 'error', '❌ Impossible d’envoyer le lien.');
     }
   });
 }
