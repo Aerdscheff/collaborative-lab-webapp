@@ -18,6 +18,11 @@ export async function renderLayout(app, contentHtml) {
           <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.hash='#home'">
             <img src="/assets/logo-official.png" alt="Äerdschëff Logo" class="h-8 drop-shadow-md">
             <span class="font-exo2 text-lg font-semibold tracking-wide">Collaborative Lab</span>
+            ${
+              role === "admin"
+                ? `<span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-yellow-400 text-black font-bold shadow-md">ADMIN</span>`
+                : ""
+            }
           </div>
 
           <!-- Desktop menu -->
