@@ -7,7 +7,7 @@ export function renderLayout(app, contentHtml) {
       <header class="fixed top-4 left-1/2 transform -translate-x-1/2 w-[95%] bg-gradient-to-r from-[#E25C5C]/90 to-purple-600/90 backdrop-blur-md rounded-xl text-white shadow-lg z-50">
         <nav class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
           <!-- Logo -->
-          <div class="flex items-center space-x-3">
+          <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.hash='#home'">
             <img src="/assets/logo-official.png" alt="Äerdschëff Logo" class="h-8 drop-shadow-md">
             <span class="font-exo2 text-lg font-semibold tracking-wide">Collaborative Lab</span>
           </div>
@@ -48,7 +48,11 @@ export function renderLayout(app, contentHtml) {
       <!-- Footer premium -->
       <footer class="bg-gradient-to-r from-purple-600/90 to-[#E25C5C]/90 text-white py-4 mt-auto">
         <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between px-6 space-y-3 md:space-y-0">
-          <p class="text-sm opacity-80">© 2025 Äerdschëff · Collaborative Lab</p>
+          <p class="text-sm opacity-80">© 2025 
+            <a href="https://aerdscheff.lu" target="_blank" class="underline hover:text-turquoise-300">
+              Äerdschëff
+            </a> · Collaborative Lab
+          </p>
           <div class="flex space-x-6">
             <a href="https://github.com/Aerdscheff/collaborative-lab-webapp" target="_blank" aria-label="Code source sur GitHub"
                class="hover:text-turquoise-300 hover:drop-shadow-[0_0_8px_rgba(64,224,208,0.8)] transition">
