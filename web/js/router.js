@@ -8,8 +8,9 @@ import { render as renderMessages } from "./views/messages.js";
 import { render as renderCollabs } from "./views/collaborations.js";
 import { render as renderAdmin } from "./views/admin.js";
 import { render as renderResetPassword } from "./views/reset-password.js";
-import { render as renderResetPasswordComplete } from "./views/reset-password-complete.js"; // ✅ ajout
-import { render as renderAuth } from "./views/auth.js";
+import { render as renderResetPasswordComplete } from "./views/reset-password-complete.js";
+// 👇 on pointe maintenant directement sur auth.js (fusionné)
+import { render as renderAuth } from "./auth.js";
 
 // Helpers
 import { requireAuth, requireAdmin } from "./authGuard.js";
@@ -71,7 +72,7 @@ async function router() {
       withFadeIn(renderResetPassword, app);
       break;
 
-    case hash === "#reset-password-complete": // ✅ nouvelle route
+    case hash === "#reset-password-complete":
       withFadeIn(renderResetPasswordComplete, app);
       break;
 
