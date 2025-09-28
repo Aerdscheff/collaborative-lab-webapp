@@ -70,10 +70,16 @@ export async function render(app, ficheId) {
             class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-xl shadow-md transition">
             ⬅️ Retour
           </a>
-          <a href="#fiches/${fiche.id}/edit"
-            class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-2 rounded-xl shadow-md transition">
-            ✏️ Modifier
-          </a>
+          <div class="flex space-x-3">
+            <a href="#fiches/${fiche.id}/edit"
+              class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-2 rounded-xl shadow-md transition">
+              ✏️ Modifier
+            </a>
+            <a href="#messages?to=${fiche.owner}"
+              class="bg-gradient-to-r from-purple-600 to-[#E25C5C] text-white px-6 py-2 rounded-xl shadow-md transition">
+              💬 Envoyer un message
+            </a>
+          </div>
         </footer>
       </article>
     `;
