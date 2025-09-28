@@ -8,21 +8,9 @@ export async function render(app) {
   if (!session) return;
 
   const content = `
-    <!-- Hero sombre -->
-    <section class="relative w-full h-[30vh] flex items-center justify-center overflow-hidden">
-      <div class="absolute inset-0 bg-cover bg-center"
-           style="background-image: url('/assets/batiment-aerdscheff.png'); background-attachment: fixed;"></div>
-      <div class="absolute inset-0 bg-gradient-to-r from-[#E25C5C]/70 via-purple-600/80 to-[#E25C5C]/70"></div>
-      <div class="relative z-10 text-center text-white">
-        <h1 class="text-3xl font-exo2 font-bold">✏️ Modifier mon profil</h1>
-      </div>
-    </section>
-
-    <!-- Formulaire -->
-    <section class="relative w-full h-[70vh] overflow-y-auto py-10">
-      <div id="profil-edit-feedback" class="mb-6 text-center"></div>
-      <div id="profil-edit-container" class="max-w-2xl mx-auto"></div>
-    </section>
+    <h1 class="text-4xl font-exo2 font-bold text-purple-700 mb-8">✏️ Modifier mon profil</h1>
+    <div id="profil-edit-feedback" class="mb-6"></div>
+    <div id="profil-edit-container" class="max-w-2xl mx-auto"></div>
   `;
 
   renderLayout(app, content);
@@ -44,31 +32,37 @@ export async function render(app) {
       <form id="profil-edit-form" class="bg-white shadow-md rounded-xl p-6 space-y-6">
         <div>
           <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
-          <input id="name" name="name" type="text"
-                 value="${profil.name || ''}"
-                 class="w-full border-gray-300 rounded-xl shadow-sm focus:ring-purple-600 focus:border-purple-600 p-2">
+          <input id="name" name="name" type="text" value="${profil.name || ''}"
+            class="w-full border-gray-300 rounded-xl p-2">
         </div>
 
         <div>
           <label for="discipline" class="block text-sm font-medium text-gray-700 mb-1">Discipline</label>
-          <input id="discipline" name="discipline" type="text"
-                 value="${profil.discipline || ''}"
-                 class="w-full border-gray-300 rounded-xl shadow-sm focus:ring-purple-600 focus:border-purple-600 p-2">
+          <input id="discipline" name="discipline" type="text" value="${profil.discipline || ''}"
+            class="w-full border-gray-300 rounded-xl p-2">
         </div>
 
         <div>
           <label for="bio" class="block text-sm font-medium text-gray-700 mb-1">Bio</label>
           <textarea id="bio" name="bio" rows="4"
-                    class="w-full border-gray-300 rounded-xl shadow-sm focus:ring-purple-600 focus:border-purple-600 p-2">${profil.bio || ''}</textarea>
+            class="w-full border-gray-300 rounded-xl p-2">${profil.bio || ''}</textarea>
+        </div>
+
+        <div class="flex items-center">
+          <input id="show_email" name="show_email" type="checkbox" ${profil.show_email ? 'checked' : ''}
+            class="h-4 w-4 text-purple-600 border-gray-300 rounded">
+          <label for="show_email" class="ml-2 text-sm text-gray-700">
+            Rendre mon e-mail visible sur ma fiche utilisateur
+          </label>
         </div>
 
         <div class="flex justify-between">
           <a href="#profil"
-             class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-xl shadow-md transition">
-             ⬅️ Annuler
+            class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-xl shadow-md transition">
+            ⬅️ Annuler
           </a>
           <button type="submit"
-                  class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-2 rounded-xl shadow-md transition">
+            class="bg-gradient-to-r from-[#E25C5C] to-purple-600 text-white px-6 py-2 rounded-xl shadow-md transition">
             💾 Enregistrer
           </button>
         </div>
@@ -84,6 +78,7 @@ export async function render(app) {
         name: formData.get('name'),
         discipline: formData.get('discipline'),
         bio: formData.get('bio'),
+        show_email: formData.get('show_email') === 'on',
       };
 
       try {
@@ -91,9 +86,7 @@ export async function render(app) {
         await updateProfile(session.user.id, updated);
         showFeedback(feedback, 'success', '✅ Profil mis à jour avec succès !');
 
-        setTimeout(() => {
-          window.location.hash = '#profil';
-        }, 1000);
+        setTimeout(() => { window.location.hash = '#profil'; }, 1000);
       } catch (err) {
         console.error(err);
         showFeedback(feedback, 'error', '❌ Erreur lors de la mise à jour du profil.');
