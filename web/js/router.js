@@ -3,7 +3,9 @@ import { render as renderHome } from "./views/home.js";
 import { render as renderProfile } from "./views/profile.js";
 import { render as renderProfileEdit } from "./views/profile-edit.js";
 import { render as renderFiches } from "./views/fiches.js";
-import { render as renderFicheCreate } from "./views/fiches-create.js"; // ✅ cohérence nom
+import { render as renderFicheCreate } from "./views/fiches-create.js";
+import { render as renderFicheDetail } from "./views/fiche-detail.js"; // ✅ détail
+import { render as renderFicheEdit } from "./views/fiches-edit.js";   // ✅ édition
 import { render as renderMessages } from "./views/messages.js";
 import { render as renderCollabs } from "./views/collaborations.js";
 import { render as renderAdmin } from "./views/admin.js";
@@ -29,6 +31,26 @@ async function router() {
   const app = document.querySelector("main#app");
   const hash = window.location.hash || "#home";
 
+  // Gestion des routes dynamiques (#/fiches/:id ou #/fiches/:id/edit)
+  const ficheDetailRegex = /^#fiches\/([a-z0-9-]+)$/i;
+  const ficheEditRegex = /^#fiches\/([a-z0-9-]+)\/edit$/i;
+
+  if (ficheDetailRegex.test(hash)) {
+    const match = hash.match(ficheDetailRegex);
+    const ficheId = match[1];
+    if (!(await requireAuth())) return;
+    withFadeIn(renderFicheDetail, app, ficheId);
+    return;
+  }
+
+  if (ficheEditRegex.test(hash)) {
+    const match = hash.match(ficheEditRegex);
+    const ficheId = match[1];
+    if (!(await requireAuth())) return;
+    withFadeIn(renderFicheEdit, app, ficheId);
+    return;
+  }
+
   switch (true) {
     case hash === "#home":
       withFadeIn(renderHome, app);
@@ -48,7 +70,7 @@ async function router() {
       withFadeIn(renderFiches, app);
       break;
 
-    case hash === "#fiches/create": // ✅ corrigé
+    case hash === "#fiches/create":
       if (!(await requireAuth())) return;
       withFadeIn(renderFicheCreate, app);
       break;
