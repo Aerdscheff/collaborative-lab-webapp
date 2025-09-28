@@ -79,6 +79,10 @@ export async function render(app, ficheId) {
               class="bg-gradient-to-r from-purple-600 to-[#E25C5C] text-white px-6 py-2 rounded-xl shadow-md transition">
               💬 Envoyer un message
             </a>
+            <a href="#profil/${fiche.owner}"
+              class="bg-gradient-to-r from-gray-700 to-gray-500 text-white px-6 py-2 rounded-xl shadow-md transition">
+              👤 Voir le profil de l’auteur
+            </a>
           </div>
         </footer>
       </article>
