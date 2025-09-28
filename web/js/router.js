@@ -3,15 +3,13 @@ import { render as renderHome } from "./views/home.js";
 import { render as renderProfile } from "./views/profile.js";
 import { render as renderProfileEdit } from "./views/profile-edit.js";
 import { render as renderFiches } from "./views/fiches.js";
-import { render as renderFicheCreate } from "./views/fiches-create.js";
+import { render as renderFicheCreate } from "./views/fiches-create.js"; // ✅ cohérence nom
 import { render as renderMessages } from "./views/messages.js";
 import { render as renderCollabs } from "./views/collaborations.js";
 import { render as renderAdmin } from "./views/admin.js";
-import { render as renderAdminFiches } from "./views/admin-fiches.js";
-import { render as renderAdminLogs } from "./views/admin-logs.js";
 import { render as renderResetPassword } from "./views/reset-password.js";
 import { render as renderResetPasswordComplete } from "./views/reset-password-complete.js";
-import { render as renderAuth } from "./auth.js";
+import { render as renderAuth } from "./views/auth.js";
 
 // Helpers
 import { requireAuth, requireAdmin } from "./authGuard.js";
@@ -50,7 +48,7 @@ async function router() {
       withFadeIn(renderFiches, app);
       break;
 
-    case hash === "#fiches/create":
+    case hash === "#fiches/create": // ✅ corrigé
       if (!(await requireAuth())) return;
       withFadeIn(renderFicheCreate, app);
       break;
@@ -67,16 +65,6 @@ async function router() {
     case hash === "#admin":
       if (!(await requireAdmin())) return;
       withFadeIn(renderAdmin, app);
-      break;
-
-    case hash === "#admin/fiches":
-      if (!(await requireAdmin())) return;
-      withFadeIn(renderAdminFiches, app);
-      break;
-
-    case hash === "#admin/logs":
-      if (!(await requireAdmin())) return;
-      withFadeIn(renderAdminLogs, app);
       break;
 
     case hash === "#reset-password":
