@@ -4,21 +4,41 @@ import { supabase } from './auth.js';
 // -------------------- PROFIL --------------------
 //
 
+/**
+ * Récupérer un profil utilisateur avec email et rôle
+ */
 export async function getProfile(userId) {
   try {
-    const { data, error } = await supabase
+    // Charger le profil
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
-    if (error) throw error;
-    return data;
+    if (profileError) throw profileError;
+
+    // Charger l'utilisateur lié (email + role)
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('email, role')
+      .eq('id', userId)
+      .single();
+    if (userError) throw userError;
+
+    return {
+      ...profile,
+      email: user?.email || null,
+      role: user?.role || 'teacher'
+    };
   } catch (err) {
     console.error('[api] getProfile error', err);
     return null;
   }
 }
 
+/**
+ * Mettre à jour un profil utilisateur
+ */
 export async function updateProfile(userId, updatedData) {
   try {
     const { data, error } = await supabase
@@ -39,6 +59,9 @@ export async function updateProfile(userId, updatedData) {
 // -------------------- FICHES --------------------
 //
 
+/**
+ * Récupérer toutes les fiches
+ */
 export async function getFiches({ q = '', status = '', limit = 20, offset = 0 } = {}) {
   try {
     let query = supabase.from('fiches').select('*').range(offset, offset + limit - 1);
@@ -55,6 +78,9 @@ export async function getFiches({ q = '', status = '', limit = 20, offset = 0 } 
   }
 }
 
+/**
+ * Récupérer une fiche par ID
+ */
 export async function getFicheById(id) {
   try {
     const { data, error } = await supabase.from('fiches').select('*').eq('id', id).single();
@@ -66,6 +92,9 @@ export async function getFicheById(id) {
   }
 }
 
+/**
+ * Créer une nouvelle fiche
+ */
 export async function createFiche(payload) {
   try {
     const { data, error } = await supabase
@@ -81,6 +110,9 @@ export async function createFiche(payload) {
   }
 }
 
+/**
+ * Mettre à jour une fiche
+ */
 export async function updateFiche(id, payload) {
   try {
     const { error } = await supabase.from('fiches').update(payload).eq('id', id);
@@ -92,6 +124,9 @@ export async function updateFiche(id, payload) {
   }
 }
 
+/**
+ * Supprimer une fiche
+ */
 export async function removeFiche(id) {
   try {
     const { error } = await supabase.from('fiches').delete().eq('id', id);
@@ -104,9 +139,48 @@ export async function removeFiche(id) {
 }
 
 //
+// -------------------- MESSAGES --------------------
+//
+
+/**
+ * Récupérer les messages reçus par un utilisateur
+ */
+export async function getMessages(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('to_user', userId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error('[api] getMessages error', err);
+    return [];
+  }
+}
+
+/**
+ * Envoyer un message
+ */
+export async function sendMessage(payload) {
+  try {
+    const { error } = await supabase.from('messages').insert(payload);
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.error('[api] sendMessage error', err);
+    return false;
+  }
+}
+
+//
 // -------------------- UTILISATEURS (ADMIN) --------------------
 //
 
+/**
+ * Récupérer tous les utilisateurs (admin)
+ */
 export async function getUsers() {
   try {
     const { data, error } = await supabase.from('users').select('*');
@@ -118,6 +192,9 @@ export async function getUsers() {
   }
 }
 
+/**
+ * Mettre à jour le rôle d'un utilisateur (admin)
+ */
 export async function updateUserRole(userId, role) {
   try {
     const { data, error } = await supabase
@@ -135,7 +212,7 @@ export async function updateUserRole(userId, role) {
 }
 
 //
-// -------------------- API OBJET --------------------
+// -------------------- API OBJET (compatibilité) --------------------
 //
 export const API = {
   list: getFiches,
