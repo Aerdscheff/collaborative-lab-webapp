@@ -1,6 +1,5 @@
 [build]
-  base = "web"
-  command = "npm ci && npm run build"
+  command = "cd web && npm ci && npm run build"
   publish = "web/dist"
 
 [build.environment]
