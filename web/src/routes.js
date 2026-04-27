@@ -1,4 +1,4 @@
-import { getCurrentRole, getSession, signInWithMagicLink, signOut } from './auth.js';
+import { getCurrentRole, getSession, signInWithMagicLink, signInWithPassword, signOut } from './auth.js';
 import { requireRole, requireSession } from './guards.js';
 
 const studentActions = [
@@ -53,7 +53,9 @@ async function login() {
       <p class="notice">Requires VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your local environment.</p>
       <form id="login-form" class="grid" style="margin-top:.75rem">
         <input required type="email" name="email" placeholder="invited.user@school.lu" />
+        <input type="password" name="password" placeholder="Password (test accounts only)" />
         <button class="btn primary" type="submit">Send magic link</button>
+        <button class="btn" type="button" id="password-login-btn">Connexion test avec mot de passe</button>
       </form>
     </section>
   `);
@@ -199,6 +201,29 @@ export function bindRouteEvents(root) {
       const { error } = await signInWithMagicLink(email);
       window.alert(error ? `Login failed: ${error.message}` : 'Magic link sent. Check your inbox.');
     });
+
+    const passwordLoginBtn = root.querySelector('#password-login-btn');
+    if (passwordLoginBtn) {
+      passwordLoginBtn.addEventListener('click', async () => {
+        const formData = new FormData(loginForm);
+        const email = String(formData.get('email') || '');
+        const password = String(formData.get('password') || '');
+
+        if (!email || !password) {
+          window.alert('Email and password are required for test password login.');
+          return;
+        }
+
+        const { error } = await signInWithPassword(email, password);
+        if (error) {
+          window.alert(`Password login failed: ${error.message}`);
+          return;
+        }
+
+        window.history.pushState({}, '', '/dashboard');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      });
+    }
   }
 
   const logout = root.querySelector('#logout');

@@ -17,6 +17,11 @@ export async function signInWithMagicLink(email) {
   });
 }
 
+export async function signInWithPassword(email, password) {
+  if (!supabase) throw new Error('Supabase not configured');
+  return supabase.auth.signInWithPassword({ email, password });
+}
+
 export async function signOut() {
   if (!supabase) return;
   await supabase.auth.signOut();
