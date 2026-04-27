@@ -1,7 +1,7 @@
 [build]
   base = "web"
   command = "npm ci && npm run build"
-  publish = "web/dist"
+  publish = "dist"
 
 [build.environment]
   VITE_SUPABASE_URL = "https://ggzkapcbqljjamqwfqfo.supabase.co"
